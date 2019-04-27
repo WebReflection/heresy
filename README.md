@@ -70,6 +70,7 @@ Mixed up with builtin extends in a way that any component is a real thing on the
 
 When any class is defined, it's not just necessarily a useless `HTMLElement`, it can be pretty much any kind of element.
 
+The following example is [live in Code Pen](https://codepen.io/WebReflection/pen/eoxobK?editors=0010).
 ```js
 import {define, html, render} from 'heresy';
 
