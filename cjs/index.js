@@ -16,9 +16,9 @@ const define = Class => {
 
   // all good here: setup transformer
   const re = new RegExp(`<(/)?${name}(\\s|>)`, 'g');
-  const place = `<$1${tagName} is="${is}"$2`;
-  const wrap = (self, type) => (...args) => render(self, () => type(...args));
+  const place = ($, a, b) => a ? `</${name}>` : `<${tagName} is="${is}"${b}`;
   transform(markup => markup.replace(re, place));
+  const wrap = (self, type) => (...args) => render(self, () => type(...args));
   Object.defineProperties(
     Class.prototype,
     {

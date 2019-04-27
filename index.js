@@ -1,4 +1,4 @@
-var heresy = (function (exports) {
+var heresy = (function (document,exports) {
   'use strict';
 
   
@@ -60,7 +60,7 @@ var heresy = (function (exports) {
   var templateLiteral = function () {
 
     var RAW = 'raw';
-    var isNoOp = (typeof document === "undefined" ? "undefined" : typeof(document)) !== 'object';
+    var isNoOp = false;
 
     var _templateLiteral = function templateLiteral(tl) {
       if ( // for badly transpiled literals
@@ -1452,7 +1452,14 @@ var heresy = (function (exports) {
     }); // all good here: setup transformer
 
     var re = new RegExp("<(/)?".concat(name, "(\\s|>)"), 'g');
-    var place = "<$1".concat(tagName, " is=\"").concat(is, "\"$2");
+
+    var place = function place($, a, b) {
+      return a ? "</".concat(name, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(b);
+    };
+
+    transform(function (markup) {
+      return markup.replace(re, place);
+    });
 
     var wrap = function wrap(self, type) {
       return function () {
@@ -1466,9 +1473,6 @@ var heresy = (function (exports) {
       };
     };
 
-    transform(function (markup) {
-      return markup.replace(re, place);
-    });
     Object.defineProperties(Class.prototype, {
       html: {
         get: function get() {
@@ -1490,4 +1494,4 @@ var heresy = (function (exports) {
 
   return exports;
 
-}({}));
+}(document,{}));
