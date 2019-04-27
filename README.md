@@ -36,7 +36,7 @@ define(MyButton);
 render(document.body, () => html`<MyButton props=${{name: 'Magic'}} />`);
 
 setTimeout(() => console.log(document.body.innerHTML));
-// <button is="my-button">Click Magic!</button>
+// <button is='mybutton-heresy'>Click Magic!</button>
 ```
 
 
@@ -58,11 +58,12 @@ document.write('<script src="https://unpkg.com/document-register-element"><\x2fs
 </script>
 ```
 
+
 ## Concept
 
 Custom Elements builtin are likely the best thing we have to build components the way we want to.
 
-Instead of using a non standard indirection as JSX is, we can use the power of domtagger, the hyperHTML and lighterhtml tag engine, to replace once any `<DefinedElement />` with, or without nested nodes.
+Instead of using a non standard indirection as JSX is, we can use the power of [domtagger](https://github.com/WebReflection/domtagger#domtagger), the [hyperHTML](https://github.com/WebReflection/hyperHTML) and [lighterhtml](https://github.com/WebReflection/lighterhtml) tag engine, to replace once any `<DefinedElement />` with, or without nested nodes.
 
 The Custom Elements V1 API provides enough primitives to intercepts any sort of attribute (i.e. the `props` in the example), but also react on events such `connectedCallback` or `disconnectedCallback` and `attributeChangedCallback`.
 
@@ -106,3 +107,17 @@ render(document.body, () => html`
   * any attribute change, or node lifecycle, can be tracked via VQ API (no componentDidMount and friends)
   * no redundant dom nodes, no ghost fragments, a clean as possible output
 
+
+## CSS - How to style this heresy
+
+Every class name will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
+
+```css
+*[is$='-heresy']:hover {
+  opacity: .8;
+}
+
+tag[is='specific-heresy'] {
+  display: block;
+}
+```
