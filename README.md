@@ -104,13 +104,13 @@ render(document.body, () => html`
 
   * declared elements are the instance you'd expect (no virtual, no facade)
   * declared elements can be of any kind (table, tr, select, option, ...)
-  * any attribute change, or node lifecycle, can be tracked via VQ API (no componentDidMount and friends)
+  * any attribute change, or node lifecycle, can be tracked via Custom Elements V1 API (no componentDidMount and friends)
   * no redundant dom nodes, no ghost fragments, a clean as possible output
 
 
-## CSS - How to style this heresy
+## CSS - How to query or style this heresy
 
-Every class name will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
+Every builtin extend will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
 
 ```css
 *[is$='-heresy']:hover {
