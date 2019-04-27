@@ -1454,7 +1454,7 @@ var heresy = (function (document,exports) {
     var re = new RegExp("<(/)?".concat(name, "(\\s|>)"), 'g');
 
     var place = function place($, a, b) {
-      return a ? "</".concat(name, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(b);
+      return a ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(b);
     };
 
     transform(function (markup) {
