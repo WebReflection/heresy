@@ -24,15 +24,31 @@ const define = Class => {
       const {tagName, is} = map[name];
       return close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`;
     }));
+
   const heresy = Object.keys(map).join('|');
   re = new RegExp(`<(/)?(${heresy})([ \\f\\n\\r\\t>])`, 'g');
 
-  Object.defineProperties(
-    Class.prototype,
-    {
-      html: { get() { return wrap(this, html); } },
-      svg: { get() { return wrap(this, svg); } }
-    }
-  );
+  const proto = Class.prototype;
+  const properties = {
+    html: { get() { return wrap(this, html); } },
+    svg: { get() { return wrap(this, svg); } }
+  };
+
+  if ('render' in proto && !('connectedCallback' in proto))
+    properties.connectedCallback = {value: connectedCallback};
+
+  if (!('handleEvent' in proto))
+    properties.handleEvent = {value: handleEvent};
+
+  Object.defineProperties(proto, properties);
+  return Class;
 };
 exports.define = define;
+
+function connectedCallback() {
+  this.render();
+}
+
+function handleEvent() {
+  this[`on${event.type}`](event);
+}

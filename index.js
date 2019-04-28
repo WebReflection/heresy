@@ -1479,7 +1479,8 @@ var heresy = (function (document,exports) {
     });
     var heresy = Object.keys(map).join('|');
     re = new RegExp("<(/)?(".concat(heresy, ")([ \\f\\n\\r\\t>])"), 'g');
-    Object.defineProperties(Class.prototype, {
+    var proto = Class.prototype;
+    var properties = {
       html: {
         get: function get() {
           return wrap(this, html);
@@ -1490,8 +1491,24 @@ var heresy = (function (document,exports) {
           return wrap(this, svg);
         }
       }
-    });
+    };
+    if ('render' in proto && !('connectedCallback' in proto)) properties.connectedCallback = {
+      value: connectedCallback
+    };
+    if (!('handleEvent' in proto)) properties.handleEvent = {
+      value: handleEvent
+    };
+    Object.defineProperties(proto, properties);
+    return Class;
   };
+
+  function connectedCallback() {
+    this.render();
+  }
+
+  function handleEvent() {
+    this["on".concat(event.type)](event);
+  }
 
   exports.define = define;
   exports.html = html;
