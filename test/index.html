@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>heresy - basic test page</title>
+    <style>
+    *[is$='-heresy']:hover:not(button) {
+      opacity: .8;
+      cursor: default;
+    }
+    h1[is='h1-heresy'] {
+      font-size: large;
+    }
+    </style>
+    <script>this.customElements||document.write('<script src="https://unpkg.com/document-register-element"><\x2fscript>')</script>
+    <script defer src="https://unpkg.com/@ungap/custom-elements-builtin"></script>
+    <script defer src="../index.js"></script>
+    <script defer src="index.js"></script>
+  </head>
+</html>
