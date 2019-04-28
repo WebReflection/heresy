@@ -4,17 +4,59 @@ const map = {};
 const wrap = (self, type) => (...args) => render(self, () => type(...args));
 let re = null;
 
+const injectStyle = cssText => {
+  const style = document.createElement('style');
+  style.type = 'text/css';
+  if (style.styleSheet)
+    style.styleSheet.cssText = cssText;
+  else
+    style.appendChild(document.createTextNode(cssText));
+  const head = document.head || document.querySelector('head');
+  head.insertBefore(style, head.lastChild);
+};
+
 export {html, render, svg};
+
 export const define = Class => {
-  const {name, tagName} = Class;
+  const {name, tagName, style} = Class;
   if (!name)
     throw `Undefined class name`;
   if (!tagName)
     throw `Undefined ${name} static tagName`;
 
+  const {prototype} = Class;
+  const configurable = true;
+  const properties = {
+    html: {
+      configurable,
+      get() { return wrap(this, html); }
+    },
+    svg: {
+      configurable,
+      get() { return wrap(this, svg); }
+    }
+  };
+
+  if ('render' in prototype && !('connectedCallback' in prototype))
+    properties.connectedCallback = {
+      configurable,
+      value: connectedCallback
+    };
+
+  if (!('handleEvent' in prototype))
+    properties.handleEvent = {
+      configurable,
+      value: handleEvent
+    };
+
+  Object.defineProperties(prototype, properties);
+
   const is = name.toLowerCase() + '-heresy';
   customElements.define(is, Class, {extends: tagName});
   map[name] = {tagName, is};
+
+  if (style)
+    injectStyle(style.call(Class, `${tagName}[is="${is}"]`));
 
   if (!re)
     transform(markup => markup.replace(re, (_, close, name, after) => {
@@ -25,19 +67,6 @@ export const define = Class => {
   const heresy = Object.keys(map).join('|');
   re = new RegExp(`<(/)?(${heresy})([ \\f\\n\\r\\t>])`, 'g');
 
-  const proto = Class.prototype;
-  const properties = {
-    html: { get() { return wrap(this, html); } },
-    svg: { get() { return wrap(this, svg); } }
-  };
-
-  if ('render' in proto && !('connectedCallback' in proto))
-    properties.connectedCallback = {value: connectedCallback};
-
-  if (!('handleEvent' in proto))
-    properties.handleEvent = {value: handleEvent};
-
-  Object.defineProperties(proto, properties);
   return Class;
 };
 
@@ -45,6 +74,6 @@ function connectedCallback() {
   this.render();
 }
 
-function handleEvent() {
+function handleEvent(event) {
   this[`on${event.type}`](event);
 }

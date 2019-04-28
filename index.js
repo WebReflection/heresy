@@ -1456,11 +1456,45 @@ var heresy = (function (document,exports) {
   };
 
   var re = null;
+
+  var injectStyle = function injectStyle(cssText) {
+    var style = document.createElement('style');
+    style.type = 'text/css';
+    if (style.styleSheet) style.styleSheet.cssText = cssText;else style.appendChild(document.createTextNode(cssText));
+    var head = document.head || document.querySelector('head');
+    head.insertBefore(style, head.lastChild);
+  };
   var define = function define(Class) {
     var name = Class.name,
-        tagName = Class.tagName;
+        tagName = Class.tagName,
+        style = Class.style;
     if (!name) throw "Undefined class name";
     if (!tagName) throw "Undefined ".concat(name, " static tagName");
+    var prototype = Class.prototype;
+    var configurable = true;
+    var properties = {
+      html: {
+        configurable: configurable,
+        get: function get() {
+          return wrap(this, html);
+        }
+      },
+      svg: {
+        configurable: configurable,
+        get: function get() {
+          return wrap(this, svg);
+        }
+      }
+    };
+    if ('render' in prototype && !('connectedCallback' in prototype)) properties.connectedCallback = {
+      configurable: configurable,
+      value: connectedCallback
+    };
+    if (!('handleEvent' in prototype)) properties.handleEvent = {
+      configurable: configurable,
+      value: handleEvent
+    };
+    Object.defineProperties(prototype, properties);
     var is = name.toLowerCase() + '-heresy';
     customElements.define(is, Class, {
       "extends": tagName
@@ -1469,6 +1503,7 @@ var heresy = (function (document,exports) {
       tagName: tagName,
       is: is
     };
+    if (style) injectStyle(style.call(Class, "".concat(tagName, "[is=\"").concat(is, "\"]")));
     if (!re) transform(function (markup) {
       return markup.replace(re, function (_, close, name, after) {
         var _map$name = map[name],
@@ -1479,26 +1514,6 @@ var heresy = (function (document,exports) {
     });
     var heresy = Object.keys(map).join('|');
     re = new RegExp("<(/)?(".concat(heresy, ")([ \\f\\n\\r\\t>])"), 'g');
-    var proto = Class.prototype;
-    var properties = {
-      html: {
-        get: function get() {
-          return wrap(this, html);
-        }
-      },
-      svg: {
-        get: function get() {
-          return wrap(this, svg);
-        }
-      }
-    };
-    if ('render' in proto && !('connectedCallback' in proto)) properties.connectedCallback = {
-      value: connectedCallback
-    };
-    if (!('handleEvent' in proto)) properties.handleEvent = {
-      value: handleEvent
-    };
-    Object.defineProperties(proto, properties);
     return Class;
   };
 
@@ -1506,7 +1521,7 @@ var heresy = (function (document,exports) {
     this.render();
   }
 
-  function handleEvent() {
+  function handleEvent(event) {
     this["on".concat(event.type)](event);
   }
 
