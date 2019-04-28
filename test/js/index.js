@@ -1,25 +1,13 @@
 const {define, html, render} = heresy;
 
-// a div
-define(class Div extends HTMLDivElement {
-  static get tagName() { return 'div'; }
-});
-
-// a paragraph
-define(class P extends HTMLParagraphElement {
-  static get tagName() { return 'p'; }
-});
-
-// a h1
-define(class H1 extends HTMLHeadingElement {
-  static get tagName() { return 'h1'; }
-});
-
 // define the custom element (class name mandatory)
 define(class MyButton extends HTMLButtonElement {
 
   // the only mandatory static field
   static get tagName() { return 'button'; }
+
+  // (optional) mandatory only for transpiled code
+  static get name() { return 'MyButton'; }
 
   // (optional) intercepts some attribute (any value)
   set props(props) { this._props = props; }
@@ -34,6 +22,24 @@ define(class MyButton extends HTMLButtonElement {
     // this.html or this.svg are provided automatically
     this.html`Click ${this.props.name}!`;
   }
+});
+
+// a div
+define(class Div extends HTMLDivElement {
+  static get name() { return 'Div'; }
+  static get tagName() { return 'div'; }
+});
+
+// a paragraph
+define(class P extends HTMLParagraphElement {
+  static get name() { return 'P'; }
+  static get tagName() { return 'p'; }
+});
+
+// a h1
+define(class H1 extends HTMLHeadingElement {
+  static get name() { return 'H1'; }
+  static get tagName() { return 'h1'; }
 });
 
 render(document.body, () => html`

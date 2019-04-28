@@ -53,70 +53,7 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 var _heresy = heresy,
     define = _heresy.define,
     html = _heresy.html,
-    render = _heresy.render; // a div
-
-define(
-/*#__PURE__*/
-function (_HTMLDivElement) {
-  _inherits(Div, _HTMLDivElement);
-
-  function Div() {
-    _classCallCheck(this, Div);
-
-    return _possibleConstructorReturn(this, _getPrototypeOf(Div).apply(this, arguments));
-  }
-
-  _createClass(Div, null, [{
-    key: "tagName",
-    get: function get() {
-      return 'div';
-    }
-  }]);
-
-  return Div;
-}(_wrapNativeSuper(HTMLDivElement))); // a paragraph
-
-define(
-/*#__PURE__*/
-function (_HTMLParagraphElement) {
-  _inherits(P, _HTMLParagraphElement);
-
-  function P() {
-    _classCallCheck(this, P);
-
-    return _possibleConstructorReturn(this, _getPrototypeOf(P).apply(this, arguments));
-  }
-
-  _createClass(P, null, [{
-    key: "tagName",
-    get: function get() {
-      return 'p';
-    }
-  }]);
-
-  return P;
-}(_wrapNativeSuper(HTMLParagraphElement))); // a h1
-
-define(
-/*#__PURE__*/
-function (_HTMLHeadingElement) {
-  _inherits(H1, _HTMLHeadingElement);
-
-  function H1() {
-    _classCallCheck(this, H1);
-
-    return _possibleConstructorReturn(this, _getPrototypeOf(H1).apply(this, arguments));
-  }
-
-  _createClass(H1, null, [{
-    key: "tagName",
-    get: function get() {
-      return 'h1';
-    }
-  }]);
-
-  return H1;
-}(_wrapNativeSuper(HTMLHeadingElement))); // define the custom element (class name mandatory)
+    render = _heresy.render; // define the custom element (class name mandatory)
 
 define(
 /*#__PURE__*/
@@ -157,11 +94,95 @@ function (_HTMLButtonElement) {
     // the only mandatory static field
     get: function get() {
       return 'button';
+    } // (optional) mandatory only for transpiled code
+
+  }, {
+    key: "name",
+    get: function get() {
+      return 'MyButton';
     }
   }]);
 
   return MyButton;
-}(_wrapNativeSuper(HTMLButtonElement)));
+}(_wrapNativeSuper(HTMLButtonElement))); // a div
+
+define(
+/*#__PURE__*/
+function (_HTMLDivElement) {
+  _inherits(Div, _HTMLDivElement);
+
+  function Div() {
+    _classCallCheck(this, Div);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(Div).apply(this, arguments));
+  }
+
+  _createClass(Div, null, [{
+    key: "name",
+    get: function get() {
+      return 'Div';
+    }
+  }, {
+    key: "tagName",
+    get: function get() {
+      return 'div';
+    }
+  }]);
+
+  return Div;
+}(_wrapNativeSuper(HTMLDivElement))); // a paragraph
+
+define(
+/*#__PURE__*/
+function (_HTMLParagraphElement) {
+  _inherits(P, _HTMLParagraphElement);
+
+  function P() {
+    _classCallCheck(this, P);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(P).apply(this, arguments));
+  }
+
+  _createClass(P, null, [{
+    key: "name",
+    get: function get() {
+      return 'P';
+    }
+  }, {
+    key: "tagName",
+    get: function get() {
+      return 'p';
+    }
+  }]);
+
+  return P;
+}(_wrapNativeSuper(HTMLParagraphElement))); // a h1
+
+define(
+/*#__PURE__*/
+function (_HTMLHeadingElement) {
+  _inherits(H1, _HTMLHeadingElement);
+
+  function H1() {
+    _classCallCheck(this, H1);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(H1).apply(this, arguments));
+  }
+
+  _createClass(H1, null, [{
+    key: "name",
+    get: function get() {
+      return 'H1';
+    }
+  }, {
+    key: "tagName",
+    get: function get() {
+      return 'h1';
+    }
+  }]);
+
+  return H1;
+}(_wrapNativeSuper(HTMLHeadingElement)));
 render(document.body, function () {
   return html(_templateObject2(), {
     name: 'Magic'

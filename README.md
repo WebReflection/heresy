@@ -42,20 +42,36 @@ setTimeout(() => console.log(document.body.innerHTML));
 
 ## Compatibility
 
-Every browser, but some might need some polyfill upfront (or transpiled code).
+The [test page](https://webreflection.github.io/heresy/test/) uses, and describes, few techniques to address all browsers, from IE9 to latest evergreen.
+
+The following list describes the _heresy_'s compatibility break down:
+
+  * IE9 and IE10 *might* need an `Object.freeze` patch, to avoid breaking on frozen template literals when passed to polyfilled WeakMaps. The patch checks for the existence of `WeakMap`, hence it's completely safe for any modern browser, including IE11.
+  * old Edge and all IE might need a Custom Elements polyfill upfront. In this case the famous [document-register-element](https://github.com/WebReflection/document-register-element) would be the suggested choice, since it patches built in right away too.
+  * Safari and WebKit have an understandable but pretty stubborn position regarding built-in elements, so that a 1K [polyfill](https://github.com/ungap/custom-elements-builtin) is needed, in case you target Safari and WebKit too.
 
 
-### How to include Custom Elements V1 with builtin for every browser
+### Broader compatibility in a nutshell
 
-Simply place a couple of script tags on the top of your page.
 ```html
-<script>/* includes DRE only in old browsers */
-this.customElements||
-document.write('<script src="https://unpkg.com/document-register-element"><\x2fscript>')
+<script>
+  // Patch for IE9 and IE10 (browsers with no WeakMap)
+  // frozen template literals cannot be addressed by common WeakMap polyfills
+  // this patch avoid Object.freeze to break when template literals are passed to WeakMaps
+  this.WeakMap||!function(O,f){f=O.freeze;O.freeze=function(o){return 'raw' in o?o:f(o)}}(Object);
 </script>
-<script src="https://unpkg.com/@ungap/custom-elements-builtin">
-/* this is just 1K fix in case you target Safari/WebKit too */
+<script>
+  // Patch for all IE, Edge, and older browsers without customElements
+  // completely ignored/irrelevant for any other modern browser
+  // https://github.com/WebReflection/document-register-element
+  this.customElements||document.write(
+    '<script src="https://unpkg.com/document-register-element"><\x2fscript>'
+  );
 </script>
+<script defer src="https://unpkg.com/@ungap/custom-elements-builtin">/*
+  1K Patch for Safari/WebKit
+  https://github.com/ungap/custom-elements-builtin
+*/</script>
 ```
 
 
