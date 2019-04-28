@@ -1441,6 +1441,21 @@ var heresy = (function (document,exports) {
     this.args = args;
   }
 
+  var map = {};
+
+  var wrap = function wrap(self, type) {
+    return function () {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      return render(self, function () {
+        return type.apply(void 0, args);
+      });
+    };
+  };
+
+  var re = null;
   var define = function define(Class) {
     var name = Class.name,
         tagName = Class.tagName;
@@ -1449,30 +1464,21 @@ var heresy = (function (document,exports) {
     var is = name.toLowerCase() + '-heresy';
     customElements.define(is, Class, {
       "extends": tagName
-    }); // all good here: setup transformer
-
-    var re = new RegExp("<(/)?".concat(name, "(\\s|>)"), 'g');
-
-    var place = function place($, a, b) {
-      return a ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(b);
-    };
-
-    transform(function (markup) {
-      return markup.replace(re, place);
     });
-
-    var wrap = function wrap(self, type) {
-      return function () {
-        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
-        }
-
-        return render(self, function () {
-          return type.apply(void 0, args);
-        });
-      };
+    map[name] = {
+      tagName: tagName,
+      is: is
     };
-
+    if (!re) transform(function (markup) {
+      return markup.replace(re, function (_, close, name, after) {
+        var _map$name = map[name],
+            tagName = _map$name.tagName,
+            is = _map$name.is;
+        return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+      });
+    });
+    var heresy = Object.keys(map).join('|');
+    re = new RegExp("<(/)?(".concat(heresy, ")([ \\f\\n\\r\\t>])"), 'g');
     Object.defineProperties(Class.prototype, {
       html: {
         get: function get() {

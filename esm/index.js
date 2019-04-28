@@ -1,5 +1,9 @@
 import {html, render, svg, transform} from 'lighterhtml';
 
+const map = {};
+const wrap = (self, type) => (...args) => render(self, () => type(...args));
+let re = null;
+
 export {html, render, svg};
 export const define = Class => {
   const {name, tagName} = Class;
@@ -10,25 +14,21 @@ export const define = Class => {
 
   const is = name.toLowerCase() + '-heresy';
   customElements.define(is, Class, {extends: tagName});
+  map[name] = {tagName, is};
 
-  // all good here: setup transformer
-  const re = new RegExp(`<(/)?${name}(\\s|>)`, 'g');
-  const place = ($, a, b) => a ? `</${tagName}>` : `<${tagName} is="${is}"${b}`;
-  transform(markup => markup.replace(re, place));
-  const wrap = (self, type) => (...args) => render(self, () => type(...args));
+  if (!re)
+    transform(markup => markup.replace(re, (_, close, name, after) => {
+      const {tagName, is} = map[name];
+      return close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`;
+    }));
+  const heresy = Object.keys(map).join('|');
+  re = new RegExp(`<(/)?(${heresy})([ \\f\\n\\r\\t>])`, 'g');
+
   Object.defineProperties(
     Class.prototype,
     {
-      html: {
-        get() {
-          return wrap(this, html);
-        }
-      },
-      svg: {
-        get() {
-          return wrap(this, svg);
-        }
-      }
+      html: { get() { return wrap(this, html); } },
+      svg: { get() { return wrap(this, svg); } }
     }
   );
 };
