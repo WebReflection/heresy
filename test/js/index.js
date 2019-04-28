@@ -6,7 +6,7 @@ define(class MyButton extends HTMLButtonElement {
   // the only mandatory static field
   static get tagName() { return 'button'; }
 
-  // (optional) mandatory only for transpiled code
+  // optional but mandatory for transpiled code
   static get name() { return 'MyButton'; }
 
   // (optional) intercepts some attribute (any value)

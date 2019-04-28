@@ -14,6 +14,9 @@ class MyButton extends HTMLButtonElement {
   // the only mandatory static field
   static get tagName() { return 'button'; }
 
+  // optional but mandatory for transpiled code
+  static get name() { return 'MyButton'; }
+
   // (optional) intercepts some attribute (any value)
   set props(props) { this._props = props; }
   get props() { return this._props; }
