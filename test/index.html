@@ -15,7 +15,8 @@
     </style>
     <script>this.customElements||document.write('<script src="https://unpkg.com/document-register-element"><\x2fscript>')</script>
     <script defer src="https://unpkg.com/@ungap/custom-elements-builtin"></script>
-    <script defer src="../index.js"></script>
-    <script defer src="index.js"></script>
+    <script defer src="../min.js"></script>
+    <script type="module">window.ESM=!0;import'./index.js';</script>
+    <script nomodule defer src="ubl.js"></script>
   </head>
 </html>
