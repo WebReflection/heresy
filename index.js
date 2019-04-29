@@ -1475,15 +1475,11 @@ var heresy = (function (document,exports) {
     var properties = {
       html: {
         configurable: configurable,
-        get: function get() {
-          return wrap(this, html);
-        }
+        get: getHTML
       },
       svg: {
         configurable: configurable,
-        get: function get() {
-          return wrap(this, svg);
-        }
+        get: getSVG
       }
     };
     if ('render' in prototype && !('connectedCallback' in prototype)) properties.connectedCallback = {
@@ -1519,6 +1515,14 @@ var heresy = (function (document,exports) {
 
   function connectedCallback() {
     this.render();
+  }
+
+  function getHTML() {
+    return wrap(this, html);
+  }
+
+  function getSVG() {
+    return wrap(this, svg);
   }
 
   function handleEvent(event) {

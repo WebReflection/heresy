@@ -2,8 +2,7 @@ const {define} = heresy;
 
 class Item extends HTMLLIElement {
   static tagName = 'li';
-  static style(selector) {
-    return `
+  static style = (selector) => `
     ${selector} {
       list-style: none;
       background-color: white;
@@ -19,8 +18,8 @@ class Item extends HTMLLIElement {
     ${selector} > label {
       display: block;
       cursor: pointer;
-    }`;
-  }
+    }
+  `;
 
   #data = {};
   get data() { return this.#data; }

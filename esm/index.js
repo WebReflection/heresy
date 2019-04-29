@@ -29,11 +29,11 @@ export const define = Class => {
   const properties = {
     html: {
       configurable,
-      get() { return wrap(this, html); }
+      get: getHTML
     },
     svg: {
       configurable,
-      get() { return wrap(this, svg); }
+      get: getSVG
     }
   };
 
@@ -72,6 +72,14 @@ export const define = Class => {
 
 function connectedCallback() {
   this.render();
+}
+
+function getHTML() {
+  return wrap(this, html);
+}
+
+function getSVG() {
+  return wrap(this, svg);
 }
 
 function handleEvent(event) {
