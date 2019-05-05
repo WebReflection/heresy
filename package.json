@@ -23,7 +23,7 @@
   "author": "Andrea Giammarchi",
   "license": "ISC",
   "dependencies": {
-    "lighterhtml": "^0.10.0"
+    "lighterhtml": "^0.10.2"
   },
   "devDependencies": {
     "@babel/core": "^7.4.4",

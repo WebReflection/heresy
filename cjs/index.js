@@ -1,5 +1,7 @@
 'use strict';
-const {html, render, svg, transform} = require('lighterhtml');
+const {
+  Hole, render, transform, html: lighterHTML, svg: lighterSVG
+} = require('lighterhtml');
 
 const map = {};
 const wrap = (self, type) => (...args) => render(self, () => type(...args));
@@ -16,9 +18,15 @@ const injectStyle = cssText => {
   head.insertBefore(style, head.lastChild);
 };
 
-exports.html = html;
 exports.render = render;
+
+const html = (...args) => new Hole('html', args);
+exports.html = html;
+const svg = (...args) => new Hole('svg', args);
 exports.svg = svg;
+
+html.for = lighterHTML.for;
+svg.for = lighterSVG.for;
 
 const define = Class => {
   const {name, tagName, style} = Class;
@@ -79,11 +87,11 @@ function connectedCallback() {
 }
 
 function getHTML() {
-  return wrap(this, html);
+  return wrap(this, lighterHTML);
 }
 
 function getSVG() {
-  return wrap(this, svg);
+  return wrap(this, lighterSVG);
 }
 
 function handleEvent(event) {

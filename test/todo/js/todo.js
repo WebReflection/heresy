@@ -3,8 +3,6 @@ import './item.js';
 
 const {define, html} = heresy;
 
-const data2Item = data => html.for(data)`<Item data=${data}/>`;
-
 class Todo extends HTMLDivElement {
   static tagName = 'div';
   static style(selector) {
@@ -33,7 +31,7 @@ class Todo extends HTMLDivElement {
     this.html`
     <input placeholder="type item" onkeydown=${this}>
     <Hide onchange=${this}/>
-    <ul>${this.items.map(data2Item)}</ul>`;
+    <ul>${this.items.map(data => html`<Item data=${data}/>`)}</ul>`;
   }
 
   onkeydown(event) {
@@ -50,11 +48,12 @@ class Todo extends HTMLDivElement {
       }
       else {
         const data = this.items[i];
-        const item = data2Item(data);
         if (
           !data.checked ||
           !this.classList.contains('todo-only')
         ) {
+          const query = `[is=item-heresy]:nth-child(${i + 1})`;
+          const item = this.querySelector(query);
           item.scrollIntoView();
           item.flush();
         }

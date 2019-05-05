@@ -1436,6 +1436,7 @@ var heresy = (function (document,exports) {
     return length === 1 ? childNodes[0] : length ? new Wire(childNodes) : node;
   }
 
+  Object.freeze(Hole);
   function Hole(type, args) {
     this.type = type;
     this.args = args;
@@ -1464,6 +1465,22 @@ var heresy = (function (document,exports) {
     var head = document.head || document.querySelector('head');
     head.insertBefore(style, head.lastChild);
   };
+  var html$1 = function html() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    return new Hole('html', args);
+  };
+  var svg$1 = function svg() {
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+
+    return new Hole('svg', args);
+  };
+  html$1["for"] = html["for"];
+  svg$1["for"] = svg["for"];
   var define = function define(Class) {
     var name = Class.name,
         tagName = Class.tagName,
@@ -1530,9 +1547,9 @@ var heresy = (function (document,exports) {
   }
 
   exports.define = define;
-  exports.html = html;
+  exports.html = html$1;
   exports.render = render;
-  exports.svg = svg;
+  exports.svg = svg$1;
 
   return exports;
 

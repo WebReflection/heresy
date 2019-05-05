@@ -1,4 +1,8 @@
-import {html, render, svg, transform} from 'lighterhtml';
+import {
+  Hole, render, transform,
+  html as lighterHTML,
+  svg as lighterSVG
+} from 'lighterhtml';
 
 const map = {};
 const wrap = (self, type) => (...args) => render(self, () => type(...args));
@@ -15,7 +19,13 @@ const injectStyle = cssText => {
   head.insertBefore(style, head.lastChild);
 };
 
-export {html, render, svg};
+export {render};
+
+export const html = (...args) => new Hole('html', args);
+export const svg = (...args) => new Hole('svg', args);
+
+html.for = lighterHTML.for;
+svg.for = lighterSVG.for;
 
 export const define = Class => {
   const {name, tagName, style} = Class;
@@ -75,11 +85,11 @@ function connectedCallback() {
 }
 
 function getHTML() {
-  return wrap(this, html);
+  return wrap(this, lighterHTML);
 }
 
 function getSVG() {
-  return wrap(this, svg);
+  return wrap(this, lighterSVG);
 }
 
 function handleEvent(event) {
