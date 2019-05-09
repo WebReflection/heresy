@@ -1,5 +1,6 @@
 import {
-  Hole, render, transform,
+  Hole, transform,
+  render as lighterRender,
   html as lighterHTML,
   svg as lighterSVG
 } from 'lighterhtml';
@@ -19,7 +20,10 @@ const injectStyle = cssText => {
   head.insertBefore(style, head.lastChild);
 };
 
-export {render};
+export const render = (where, what) => lighterRender(
+  where,
+  typeof what === 'function' ? what : () => what
+);
 
 export const html = (...args) => new Hole('html', args);
 export const svg = (...args) => new Hole('svg', args);

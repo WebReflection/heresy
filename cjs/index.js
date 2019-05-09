@@ -1,6 +1,6 @@
 'use strict';
 const {
-  Hole, render, transform, html: lighterHTML, svg: lighterSVG
+  Hole, transform, render: lighterRender, html: lighterHTML, svg: lighterSVG
 } = require('lighterhtml');
 
 const map = {};
@@ -18,6 +18,10 @@ const injectStyle = cssText => {
   head.insertBefore(style, head.lastChild);
 };
 
+const render = (where, what) => lighterRender(
+  where,
+  typeof what === 'function' ? what : () => what
+);
 exports.render = render;
 
 const html = (...args) => new Hole('html', args);

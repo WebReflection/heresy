@@ -1450,7 +1450,7 @@ var heresy = (function (document,exports) {
         args[_key] = arguments[_key];
       }
 
-      return render(self, function () {
+      return render$1(self, function () {
         return type.apply(void 0, args);
       });
     };
@@ -1464,6 +1464,12 @@ var heresy = (function (document,exports) {
     if (style.styleSheet) style.styleSheet.cssText = cssText;else style.appendChild(document.createTextNode(cssText));
     var head = document.head || document.querySelector('head');
     head.insertBefore(style, head.lastChild);
+  };
+
+  var render$1 = function render$1(where, what) {
+    return render(where, typeof what === 'function' ? what : function () {
+      return what;
+    });
   };
   var html$1 = function html() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
@@ -1548,7 +1554,7 @@ var heresy = (function (document,exports) {
 
   exports.define = define;
   exports.html = html$1;
-  exports.render = render;
+  exports.render = render$1;
   exports.svg = svg$1;
 
   return exports;
