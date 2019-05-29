@@ -1,6 +1,10 @@
 var heresy = (function (document,exports) {
   'use strict';
 
+  function hyphenizer(s, c) {
+    return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
+  }
+
   
 
   /*! (c) Andrea Giammarchi - ISC */
@@ -1518,7 +1522,7 @@ var heresy = (function (document,exports) {
       value: handleEvent
     };
     Object.defineProperties(prototype, properties);
-    var is = name.toLowerCase() + '-heresy';
+    var is = hyphenizer(name) + '-heresy';
     customElements.define(is, Class, {
       "extends": tagName
     });

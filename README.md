@@ -19,6 +19,13 @@ class MyButton extends HTMLButtonElement {
   // optional but mandatory for transpiled code
   static get name() { return 'MyButton'; }
 
+  // optional callback to style components
+  static style(component) {
+    return `${component} {
+      border: 2px solid black;
+    }`
+  }
+
   // (optional) intercepts some attribute (any value)
   set props(props) { this._props = props; }
   get props() { return this._props; }
@@ -41,7 +48,7 @@ define(MyButton);
 render(document.body, () => html`<MyButton props=${{name: 'Magic'}} />`);
 
 setTimeout(() => console.log(document.body.innerHTML));
-// <button is='mybutton-heresy'>Click Magic!</button>
+// <button is='my-button-heresy'>Click Magic!</button>
 ```
 
 

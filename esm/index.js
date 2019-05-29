@@ -1,3 +1,4 @@
+import hyphenized from 'hyphenizer';
 import {
   Hole, transform,
   render as lighterRender,
@@ -65,7 +66,7 @@ export const define = Class => {
 
   Object.defineProperties(prototype, properties);
 
-  const is = name.toLowerCase() + '-heresy';
+  const is = hyphenized(name) + '-heresy';
   customElements.define(is, Class, {extends: tagName});
   map[name] = {tagName, is};
 

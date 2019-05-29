@@ -1,4 +1,5 @@
 'use strict';
+const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
 const {
   Hole, transform, render: lighterRender, html: lighterHTML, svg: lighterSVG
 } = require('lighterhtml');
@@ -66,7 +67,7 @@ const define = Class => {
 
   Object.defineProperties(prototype, properties);
 
-  const is = name.toLowerCase() + '-heresy';
+  const is = hyphenized(name) + '-heresy';
   customElements.define(is, Class, {extends: tagName});
   map[name] = {tagName, is};
 
