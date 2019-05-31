@@ -1,11 +1,4 @@
 'use strict';
-// TODO
-// nodes already live have no real issues with Custom Elements Built Ins
-// but nodes that are injected won't directly react to changes
-// Should <Component> be registered as <heresy-component> instead, and replace itself ASAP
-// with <div is=component-heresy> once upgraded, delegating all accessors too ?
-// This is easily overly complicated, but it's the only way to have Safari working as well.
-
 const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
 const {
   Hole, transform, render: lighterRender, html: lighterHTML, svg: lighterSVG

@@ -1450,7 +1450,6 @@ var heresy = (function (document,exports) {
     this.args = args;
   }
 
-  // TODO
   var map = {};
 
   var wrap = function wrap(self, type) {

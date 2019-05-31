@@ -1,10 +1,3 @@
-// TODO
-// nodes already live have no real issues with Custom Elements Built Ins
-// but nodes that are injected won't directly react to changes
-// Should <Component> be registered as <heresy-component> instead, and replace itself ASAP
-// with <div is=component-heresy> once upgraded, delegating all accessors too ?
-// This is easily overly complicated, but it's the only way to have Safari working as well.
-
 import hyphenized from 'hyphenizer';
 import {
   Hole, transform,
