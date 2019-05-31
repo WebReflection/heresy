@@ -1,8 +1,11 @@
 const {define} = heresy;
 
+const _data = new WeakMap;
+
 class Item extends HTMLLIElement {
-  static tagName = 'li';
-  static style = (selector) => `
+
+  static style(selector) {
+    return `
     ${selector} {
       list-style: none;
       background-color: white;
@@ -18,13 +21,12 @@ class Item extends HTMLLIElement {
     ${selector} > label {
       display: block;
       cursor: pointer;
-    }
-  `;
+    }`;
+  }
 
-  #data = {};
-  get data() { return this.#data; }
+  get data() { return _data.get(this); }
   set data(data) {
-    this.#data = data;
+    _data.set(this, data);
     this.render();
   }
 
@@ -53,4 +55,4 @@ class Item extends HTMLLIElement {
   }
 }
 
-export default define(Item);
+export default define('Item:li', Item);

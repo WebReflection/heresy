@@ -1450,6 +1450,7 @@ var heresy = (function (document,exports) {
     this.args = args;
   }
 
+  // TODO
   var map = {};
 
   var wrap = function wrap(self, type) {
@@ -1495,13 +1496,18 @@ var heresy = (function (document,exports) {
   };
   html$1["for"] = html["for"];
   svg$1["for"] = svg["for"];
-  var define = function define(Class) {
-    var name = Class.name,
-        tagName = Class.tagName,
-        style = Class.style;
-    if (!name) throw "Undefined class name";
-    if (!tagName) throw "Undefined ".concat(name, " static tagName");
-    var prototype = Class.prototype;
+  var define = function define($, Class) {
+    if (typeof $ === 'function') {
+      Class = $;
+      $ = Class.name + ':' + Class.tagName;
+    }
+
+    if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Unable to retrieve name and tagName";
+    var name = RegExp.$1,
+        tagName = RegExp.$2;
+    var _Class = Class,
+        prototype = _Class.prototype,
+        style = _Class.style;
     var configurable = true;
     var properties = {
       html: {

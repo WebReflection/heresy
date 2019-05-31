@@ -3,8 +3,10 @@ import './item.js';
 
 const {define, html} = heresy;
 
+const _items = new WeakMap;
+
 class Todo extends HTMLDivElement {
-  static tagName = 'div';
+
   static style(selector) {
     return `
     ${selector} > ul {
@@ -20,10 +22,10 @@ class Todo extends HTMLDivElement {
     }`;
   }
 
-  #items = [];
-  get items() { return this.#items; }
+  get items() { return _items.get(this) || []; }
   set items(items) {
-    this.#items = items;
+    console.log(items);
+    _items.set(this, items);
     this.render();
   }
 
@@ -69,4 +71,4 @@ class Todo extends HTMLDivElement {
   }
 }
 
-export default define(Todo);
+export default define('Todo:div', Todo);

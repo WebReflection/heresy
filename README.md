@@ -13,24 +13,27 @@ import {define, html, render} from 'heresy';
 
 class MyButton extends HTMLButtonElement {
 
-  // the only mandatory static field
-  static get tagName() { return 'button'; }
-
-  // optional but mandatory for transpiled code
+  // optional static field to define the component/class name: <MyButton ... />
+  // use define('MyButton:button', MyButton); if you want to avoid this
   static get name() { return 'MyButton'; }
 
-  // optional callback to style components
+  // optional static field to define the real tag name
+  // use define('MyButton:button', MyButton); if you want to avoid this
+  static get tagName() { return 'button'; }
+
+  // optional static callback to style components (once per definition)
   static style(component) {
     return `${component} {
       border: 2px solid black;
     }`
   }
 
-  // (optional) intercepts some attribute (any value)
+  // (optional) a way to  intercept some attribute (any value)
   set props(props) { this._props = props; }
   get props() { return this._props; }
 
-  // (optional) render once connected
+  // (optional) render once connected. If there is a render method
+  //            but no connectedCallback, the following is added automatically
   connectedCallback() { this.render(); }
 
   // (optional) populate this button content
@@ -41,11 +44,14 @@ class MyButton extends HTMLButtonElement {
   }
 }
 
-// define the custom element (class name mandatory too)
+// define the custom element via class (requires name and tagName)
 define(MyButton);
 
+// or define the custom element via Component:tag
+define('MyButton:button', MyButton);
+
 // populate some node
-render(document.body, () => html`<MyButton props=${{name: 'Magic'}} />`);
+render(document.body, html`<MyButton props=${{name: 'Magic'}} />`);
 
 setTimeout(() => console.log(document.body.innerHTML));
 // <button is='my-button-heresy'>Click Magic!</button>
@@ -106,18 +112,15 @@ import {define, html, render} from 'heresy';
 // a div
 define(class Div extends HTMLDivElement {
   static get tagName() { return 'div'; }
-})
+});
 
 // a paragraph
-define(class P extends HTMLParagraphElement {
-  static get tagName() { return 'p'; }
-})
+define('P:p', class extends HTMLParagraphElement {});
 
 // a h1
-define(class H1 extends HTMLHeadingElement {
-  static get tagName() { return 'h1'; }
-})
+define('H1:h1', class extends HTMLHeadingElement {});
 
+// render them all
 render(document.body, () => html`
   <Div>
     <H1>Hello there</H1>
@@ -134,6 +137,7 @@ render(document.body, () => html`
   * declared elements can be of any kind (table, tr, select, option, ...)
   * any attribute change, or node lifecycle, can be tracked via Custom Elements V1 API (no componentDidMount and friends)
   * no redundant dom nodes, no ghost fragments, a clean as possible output
+  * it's SSR (Server Side Rendering) friendly
 
 
 ## CSS - How to query or style this heresy
