@@ -6,6 +6,7 @@ import {
   svg as lighterSVG
 } from 'lighterhtml';
 
+const {defineProperties} = Object;
 const map = {};
 const wrap = (self, type) => (...args) => render(self, () => type(...args));
 let re = null;
@@ -32,62 +33,69 @@ export const svg = (...args) => new Hole('svg', args);
 html.for = lighterHTML.for;
 svg.for = lighterSVG.for;
 
-export const define = ($, Class) => {
-  if (typeof $ === 'function') {
-    Class = $;
-    $ = Class.name + ':' + Class.tagName;
-  }
-
-  if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($))
-    throw `Unable to retrieve name and tagName`;
-
-  const {$1: name, $2: tagName} = RegExp;
-
-  const {prototype, style} = Class;
-  const configurable = true;
-  const properties = {
-    html: {
-      configurable,
-      get: getHTML
-    },
-    svg: {
-      configurable,
-      get: getSVG
+let i = 0;
+const get = () => {
+  const uid = i ? ('-' + i) : '';
+  i++;
+  return ($, Class) => {
+    if (typeof $ === 'function') {
+      Class = $;
+      $ = Class.name + ':' + Class.tagName;
     }
+
+    if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($))
+      throw `Unable to retrieve name and tagName`;
+
+    const {$1: name, $2: tagName} = RegExp;
+  
+    const {prototype, style} = Class;
+    const configurable = true;
+    const properties = {
+      html: {
+        configurable,
+        get: getHTML
+      },
+      svg: {
+        configurable,
+        get: getSVG
+      }
+    };
+
+    if ('render' in prototype && !('connectedCallback' in prototype))
+      properties.connectedCallback = {
+        configurable,
+        value: connectedCallback
+      };
+
+    if (!('handleEvent' in prototype))
+      properties.handleEvent = {
+        configurable,
+        value: handleEvent
+      };
+
+    defineProperties(prototype, properties);
+
+    const is = hyphenized(name) + uid + '-heresy';
+    customElements.define(is, Class, {extends: tagName});
+    map[name] = {tagName, is};
+
+    if (style)
+      injectStyle(style.call(Class, `${tagName}[is="${is}"]`));
+
+    if (!re)
+      transform(markup => markup.replace(re, (_, close, name, after) => {
+        const {tagName, is} = map[name];
+        return close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`;
+      }));
+
+    const heresy = Object.keys(map).join('|');
+    re = new RegExp(`<(/)?(${heresy})([^A-Za-z0-9_])`, 'g');
+
+    return Class;
   };
-
-  if ('render' in prototype && !('connectedCallback' in prototype))
-    properties.connectedCallback = {
-      configurable,
-      value: connectedCallback
-    };
-
-  if (!('handleEvent' in prototype))
-    properties.handleEvent = {
-      configurable,
-      value: handleEvent
-    };
-
-  Object.defineProperties(prototype, properties);
-
-  const is = hyphenized(name) + '-heresy';
-  customElements.define(is, Class, {extends: tagName});
-  map[name] = {tagName, is};
-
-  if (style)
-    injectStyle(style.call(Class, `${tagName}[is="${is}"]`));
-
-  if (!re)
-    transform(markup => markup.replace(re, (_, close, name, after) => {
-      const {tagName, is} = map[name];
-      return close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`;
-    }));
-
-  const heresy = Object.keys(map).join('|');
-  re = new RegExp(`<(/)?(${heresy})([ \\f\\n\\r\\t>])`, 'g');
-
-  return Class;
 };
+
+export const define = defineProperties(get(), {local: {get}});
 
 function connectedCallback() {
   this.render();

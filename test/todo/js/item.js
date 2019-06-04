@@ -1,5 +1,3 @@
-const {define} = heresy;
-
 const _data = new WeakMap;
 
 class Item extends HTMLLIElement {
@@ -55,4 +53,4 @@ class Item extends HTMLLIElement {
   }
 }
 
-export default define('Item:li', Item);
+export default Item;

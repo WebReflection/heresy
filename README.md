@@ -50,6 +50,11 @@ define(MyButton);
 // or define the custom element via Component:tag
 define('MyButton:button', MyButton);
 
+// optionally usable for local components definition
+const {local} = define;
+local(MyButton);
+local('MyButton:button', MyButton);
+
 // populate some node
 render(document.body, html`<MyButton props=${{name: 'Magic'}} />`);
 
@@ -140,16 +145,28 @@ render(document.body, () => html`
   * it's SSR (Server Side Rendering) friendly
 
 
-## CSS - How to query or style this heresy
+## CSS - How to query or style globally defined components
 
-Every builtin extend will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
+Every global builtin extend will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
 
 ```css
 *[is$='-heresy']:hover {
   opacity: .8;
 }
 
+/* ⚠ usable only via define, not define.local */
 tag[is='specific-heresy'] {
+  display: block;
+}
+```
+
+## CSS - How to query or style locally defined components
+
+When `define.local(...)` is used instead, the suffix will have an incremental number. Instead of addressing a specific suffix, it is suggested to address the prefix.
+
+```css
+/* ℹ usable for both define and define.local */
+tag[is^='my-button-'] {
   display: block;
 }
 ```

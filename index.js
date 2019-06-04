@@ -1450,6 +1450,7 @@ var heresy = (function (document,exports) {
     this.args = args;
   }
 
+  var defineProperties = Object.defineProperties;
   var map = {};
 
   var wrap = function wrap(self, type) {
@@ -1495,59 +1496,71 @@ var heresy = (function (document,exports) {
   };
   html$1["for"] = html["for"];
   svg$1["for"] = svg["for"];
-  var define = function define($, Class) {
-    if (typeof $ === 'function') {
-      Class = $;
-      $ = Class.name + ':' + Class.tagName;
-    }
+  var i = 0;
 
-    if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Unable to retrieve name and tagName";
-    var name = RegExp.$1,
-        tagName = RegExp.$2;
-    var _Class = Class,
-        prototype = _Class.prototype,
-        style = _Class.style;
-    var configurable = true;
-    var properties = {
-      html: {
-        configurable: configurable,
-        get: getHTML
-      },
-      svg: {
-        configurable: configurable,
-        get: getSVG
+  var get = function get() {
+    var uid = i ? '-' + i : '';
+    i++;
+    return function ($, Class) {
+      if (typeof $ === 'function') {
+        Class = $;
+        $ = Class.name + ':' + Class.tagName;
       }
-    };
-    if ('render' in prototype && !('connectedCallback' in prototype)) properties.connectedCallback = {
-      configurable: configurable,
-      value: connectedCallback
-    };
-    if (!('handleEvent' in prototype)) properties.handleEvent = {
-      configurable: configurable,
-      value: handleEvent
-    };
-    Object.defineProperties(prototype, properties);
-    var is = hyphenizer(name) + '-heresy';
-    customElements.define(is, Class, {
-      "extends": tagName
-    });
-    map[name] = {
-      tagName: tagName,
-      is: is
-    };
-    if (style) injectStyle(style.call(Class, "".concat(tagName, "[is=\"").concat(is, "\"]")));
-    if (!re) transform(function (markup) {
-      return markup.replace(re, function (_, close, name, after) {
-        var _map$name = map[name],
-            tagName = _map$name.tagName,
-            is = _map$name.is;
-        return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+
+      if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Unable to retrieve name and tagName";
+      var name = RegExp.$1,
+          tagName = RegExp.$2;
+      var _Class = Class,
+          prototype = _Class.prototype,
+          style = _Class.style;
+      var configurable = true;
+      var properties = {
+        html: {
+          configurable: configurable,
+          get: getHTML
+        },
+        svg: {
+          configurable: configurable,
+          get: getSVG
+        }
+      };
+      if ('render' in prototype && !('connectedCallback' in prototype)) properties.connectedCallback = {
+        configurable: configurable,
+        value: connectedCallback
+      };
+      if (!('handleEvent' in prototype)) properties.handleEvent = {
+        configurable: configurable,
+        value: handleEvent
+      };
+      defineProperties(prototype, properties);
+      var is = hyphenizer(name) + uid + '-heresy';
+      customElements.define(is, Class, {
+        "extends": tagName
       });
-    });
-    var heresy = Object.keys(map).join('|');
-    re = new RegExp("<(/)?(".concat(heresy, ")([ \\f\\n\\r\\t>])"), 'g');
-    return Class;
+      map[name] = {
+        tagName: tagName,
+        is: is
+      };
+      if (style) injectStyle(style.call(Class, "".concat(tagName, "[is=\"").concat(is, "\"]")));
+      if (!re) transform(function (markup) {
+        return markup.replace(re, function (_, close, name, after) {
+          var _map$name = map[name],
+              tagName = _map$name.tagName,
+              is = _map$name.is;
+          return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+        });
+      });
+      var heresy = Object.keys(map).join('|');
+      re = new RegExp("<(/)?(".concat(heresy, ")([^A-Za-z0-9_])"), 'g');
+      return Class;
+    };
   };
+
+  var define = defineProperties(get(), {
+    local: {
+      get: get
+    }
+  });
 
   function connectedCallback() {
     this.render();

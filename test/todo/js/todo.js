@@ -1,7 +1,12 @@
-import './hide.js';
-import './item.js';
+import Hide from './hide.js';
+import Item from './item.js';
 
 const {define, html} = heresy;
+
+// local definition, both Hide and Item can be used as name elsewhere
+const {local} = define;
+local('Hide:label', Hide);
+local('Item:li', Item);
 
 const _items = new WeakMap;
 
@@ -24,7 +29,6 @@ class Todo extends HTMLDivElement {
 
   get items() { return _items.get(this) || []; }
   set items(items) {
-    console.log(items);
     _items.set(this, items);
     this.render();
   }
@@ -54,7 +58,7 @@ class Todo extends HTMLDivElement {
           !data.checked ||
           !this.classList.contains('todo-only')
         ) {
-          const query = `[is=item-heresy]:nth-child(${i + 1})`;
+          const query = `[is^=item-]:nth-child(${i + 1})`;
           const item = this.querySelector(query);
           item.scrollIntoView();
           item.flush();
@@ -71,4 +75,4 @@ class Todo extends HTMLDivElement {
   }
 }
 
-export default define('Todo:div', Todo);
+export default Todo;
