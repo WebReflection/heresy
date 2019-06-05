@@ -22,8 +22,11 @@ class MyButton extends HTMLButtonElement {
   static get tagName() { return 'button'; }
 
   // optional static callback to style components (once per definition)
-  static style(component) {
-    return `${component} {
+  static style(selector) {
+    // the component could be scoped so that
+    // to be sure the selector is the right one
+    // always use the received component to define its styles
+    return `${selector} {
       border: 2px solid black;
     }`
   }
@@ -112,10 +115,11 @@ When any class is defined, it's not just necessarily a useless `HTMLElement`, it
 
 The following example is [live in Code Pen](https://codepen.io/WebReflection/pen/eoxobK?editors=0010).
 ```js
-import {define, html, render} from 'heresy';
+import {define, ref, html, render} from 'heresy';
 
 // a div
 define(class Div extends HTMLDivElement {
+  static get name() { return 'Div'; }
   static get tagName() { return 'div'; }
 });
 
@@ -125,14 +129,22 @@ define('P:p', class extends HTMLParagraphElement {});
 // a h1
 define('H1:h1', class extends HTMLHeadingElement {});
 
-// render them all
-render(document.body, () => html`
-  <Div>
-    <H1>Hello there</H1>
+// render them all + ref example
+const refs = {};
+
+// refs can be created right away
+refs.div = ref();
+
+// or within the render
+render(document.body, html`
+  <Div ref=${refs.div}>
+    <H1 ref=${ref(refs, 'h1')}>Hello there</H1>
     <P>This is how custom elements look via heresy.</P>
     <P>Isn't this awesome?</P>
   </Div>
 `);
+
+console.log(refs.h1.current); // the H1 instance/node
 ```
 
 

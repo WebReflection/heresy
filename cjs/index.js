@@ -20,6 +20,11 @@ const injectStyle = cssText => {
   head.insertBefore(style, head.lastChild);
 };
 
+const ref = (self, name) => self ?
+  (self[name] || (self[name] = {current: null})) :
+  {current: null};
+exports.ref = ref;
+
 const render = (where, what) => lighterRender(
   where,
   typeof what === 'function' ? what : () => what

@@ -1475,6 +1475,13 @@ var heresy = (function (document,exports) {
     head.insertBefore(style, head.lastChild);
   };
 
+  var ref = function ref(self, name) {
+    return self ? self[name] || (self[name] = {
+      current: null
+    }) : {
+      current: null
+    };
+  };
   var render$1 = function render$1(where, what) {
     return render(where, typeof what === 'function' ? what : function () {
       return what;
@@ -1580,6 +1587,7 @@ var heresy = (function (document,exports) {
 
   exports.define = define;
   exports.html = html$1;
+  exports.ref = ref;
   exports.render = render$1;
   exports.svg = svg$1;
 

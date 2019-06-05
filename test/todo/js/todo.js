@@ -1,7 +1,7 @@
 import Hide from './hide.js';
 import Item from './item.js';
 
-const {define, html} = heresy;
+const {define, html, ref} = heresy;
 
 // local definition, both Hide and Item can be used as name elsewhere
 const {local} = define;
@@ -36,7 +36,7 @@ class Todo extends HTMLDivElement {
   render() {
     this.html`
     <input placeholder="type item" onkeydown=${this}>
-    <Hide onchange=${this}/>
+    <Hide ref=${ref(this, 'hide')} onchange=${this}/>
     <ul>${this.items.map(data => html`<Item data=${data}/>`)}</ul>`;
   }
 
@@ -58,7 +58,7 @@ class Todo extends HTMLDivElement {
           !data.checked ||
           !this.classList.contains('todo-only')
         ) {
-          const query = `[is^=item-]:nth-child(${i + 1})`;
+          const query = `li[is^=item-]:nth-child(${i + 1})`;
           const item = this.querySelector(query);
           item.scrollIntoView();
           item.flush();
@@ -70,8 +70,8 @@ class Todo extends HTMLDivElement {
     }
   }
 
-  onchange(event) {
-    this.classList.toggle('todo-only', event.target.checked);
+  onchange() {
+    this.classList.toggle('todo-only', this.hide.current.checked);
   }
 }
 
