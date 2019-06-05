@@ -1083,12 +1083,19 @@ var heresy = (function (document,exports) {
 
 
   var hyperProperty = function hyperProperty(node, name) {
-    return function (value) {
-      if (value == null) {
-        // cleanup before dropping the attribute to fix IE/Edge gotcha
-        node[name] = '';
-        node.removeAttribute(name);
-      } else node[name] = value;
+    var oldValue;
+    return function (newValue) {
+      if (oldValue !== newValue) {
+        oldValue = newValue;
+
+        if (node[name] !== newValue) {
+          if (newValue == null) {
+            // cleanup before dropping the attribute to fix IE/Edge gotcha
+            node[name] = '';
+            node.removeAttribute(name);
+          } else node[name] = newValue;
+        }
+      }
     };
   }; // special hooks helpers
 
@@ -1096,6 +1103,12 @@ var heresy = (function (document,exports) {
   var hyperRef = function hyperRef(node) {
     return function (ref) {
       ref.current = node;
+    };
+  };
+
+  var hyperSetter = function hyperSetter(node, name) {
+    return function (value) {
+      node[name] = value;
     };
   }; // list of attributes that should not be directly assigned
 
@@ -1137,6 +1150,7 @@ var heresy = (function (document,exports) {
           return hyperRef(node);
 
         default:
+          if (name.slice(0, 1) === '.') return hyperSetter(node, name.slice(1));
           if (name.slice(0, 2) === 'on') return hyperEvent(node, name);
           if (name in node && !(OWNER_SVG_ELEMENT in node || readOnly.test(name))) return hyperProperty(node, name);
           return hyperAttribute(node, original);
