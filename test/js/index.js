@@ -3,6 +3,10 @@ const {define, html, render} = heresy;
 // define the custom element (class name mandatory)
 define('MyButton:button', class extends HTMLButtonElement {
 
+  oninit(event) {
+    console.log(event.type, this.nodeName, this.is);
+  }
+
   // (optional) intercepts some attribute (any value)
   set props(props) { this._props = props; }
   get props() { return this._props; }

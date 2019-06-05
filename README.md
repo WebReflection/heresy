@@ -13,15 +13,12 @@ import {define, html, render} from 'heresy';
 
 class MyButton extends HTMLButtonElement {
 
-  // optional static field to define the component/class name: <MyButton ... />
+  // (optional) static fields to define the component/class name or tag
   // use define('MyButton:button', MyButton); if you want to avoid this
   static get name() { return 'MyButton'; }
-
-  // optional static field to define the real tag name
-  // use define('MyButton:button', MyButton); if you want to avoid this
   static get tagName() { return 'button'; }
 
-  // optional static callback to style components (once per definition)
+  // (optional) static callback to style components (once per definition)
   static style(selector) {
     // the component could be scoped so that
     // to be sure the selector is the right one
@@ -31,13 +28,18 @@ class MyButton extends HTMLButtonElement {
     }`
   }
 
-  // (optional) a way to  intercept some attribute (any value)
-  set props(props) { this._props = props; }
-  get props() { return this._props; }
+  // (optional) event driven initialization that will happen only once
+  // the ideal constructor substitute for any sort of one-off init
+  // this is triggered only once the component goes live, never before *
+  // * unless explicitly dispatched, of course
+  oninit(event) {}
 
-  // (optional) render once connected. If there is a render method
-  //            but no connectedCallback, the following is added automatically
-  connectedCallback() { this.render(); }
+  // (optional) event driven lifecycle methods, added automatically when
+  // no Custom Elements native methods such as connectedCallback, and others
+  // have been explicitly set as methods
+  onconnected(event) {}
+  ondisconnected(event) {}
+  onattributechanged(event = {attributeName, oldValue, newValue}) {}
 
   // (optional) populate this button content
   //            (kinda useless with void elements such img, input, ...)
@@ -45,9 +47,16 @@ class MyButton extends HTMLButtonElement {
     // this.html or this.svg are provided automatically
     this.html`Click ${this.props.name}!`;
   }
+
+  // (optional) automatically defined to trigger
+  // this[`on${event.type}`](event);
+  handleEvent(event) {}
+
+  // (optional) automatically defined to return this.getAttribute('is')
+  get is () {}
 }
 
-// define the custom element via class (requires name and tagName)
+// define the custom element via class (requires static name and tagName)
 define(MyButton);
 
 // or define the custom element via Component:tag

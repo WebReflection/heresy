@@ -23,6 +23,8 @@
   "author": "Andrea Giammarchi",
   "license": "ISC",
   "dependencies": {
+    "@ungap/event": "^0.1.4",
+    "@ungap/weakset": "^0.1.5",
     "hyphenizer": "^0.1.1",
     "lighterhtml": "^0.14.1"
   },

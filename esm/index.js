@@ -1,14 +1,10 @@
 import hyphenized from 'hyphenizer';
-import {
-  Hole, transform,
-  render as lighterRender,
-  html as lighterHTML,
-  svg as lighterSVG
-} from 'lighterhtml';
+import {transform} from 'lighterhtml';
+
+import {augmented, render, html, svg} from './augmented.js';
 
 const {defineProperties} = Object;
 const map = {};
-const wrap = (self, type) => (...args) => render(self, () => type(...args));
 let re = null;
 
 const injectStyle = cssText => {
@@ -21,21 +17,6 @@ const injectStyle = cssText => {
   const head = document.head || document.querySelector('head');
   head.insertBefore(style, head.lastChild);
 };
-
-export const ref = (self, name) => self ?
-  (self[name] || (self[name] = {current: null})) :
-  {current: null};
-
-export const render = (where, what) => lighterRender(
-  where,
-  typeof what === 'function' ? what : () => what
-);
-
-export const html = (...args) => new Hole('html', args);
-export const svg = (...args) => new Hole('svg', args);
-
-html.for = lighterHTML.for;
-svg.for = lighterSVG.for;
 
 let i = 0;
 const get = () => {
@@ -51,35 +32,13 @@ const get = () => {
       throw `Unable to retrieve name and tagName`;
 
     const {$1: name, $2: tagName} = RegExp;
-  
-    const {prototype, style} = Class;
-    const configurable = true;
-    const properties = {
-      html: {
-        configurable,
-        get: getHTML
-      },
-      svg: {
-        configurable,
-        get: getSVG
-      }
-    };
-
-    if ('render' in prototype && !('connectedCallback' in prototype))
-      properties.connectedCallback = {
-        configurable,
-        value: connectedCallback
-      };
-
-    if (!('handleEvent' in prototype))
-      properties.handleEvent = {
-        configurable,
-        value: handleEvent
-      };
-
-    defineProperties(prototype, properties);
-
     const is = hyphenized(name) + uid + '-heresy';
+
+    if (customElements.get(is))
+      throw `Duplicated ${is} definition`;
+
+    const {prototype, style} = Class;
+    defineProperties(prototype, augmented(prototype));
     customElements.define(is, Class, {extends: tagName});
     map[name] = {tagName, is};
 
@@ -99,20 +58,12 @@ const get = () => {
   };
 };
 
-export const define = defineProperties(get(), {local: {get}});
+const define = defineProperties(get(), {local: {get}});
+const ref = (self, name) => self ?
+  (self[name] || (self[name] = {current: null})) :
+  {current: null};
 
-function connectedCallback() {
-  this.render();
-}
-
-function getHTML() {
-  return wrap(this, lighterHTML);
-}
-
-function getSVG() {
-  return wrap(this, lighterSVG);
-}
-
-function handleEvent(event) {
-  this[`on${event.type}`](event);
-}
+export {
+  define, ref,
+  render, html, svg
+};

@@ -42,6 +42,10 @@ class Item extends HTMLLIElement {
     this.classList.add('flush');
   }
 
+  oninit(event) {
+    console.log(event);
+  }
+
   onchange() {
     const {data} = this;
     data.checked = !data.checked;

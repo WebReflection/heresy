@@ -1,12 +1,11 @@
 'use strict';
 const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
-const {
-  Hole, transform, render: lighterRender, html: lighterHTML, svg: lighterSVG
-} = require('lighterhtml');
+const {transform} = require('lighterhtml');
+
+const {augmented, render, html, svg} = require('./augmented.js');
 
 const {defineProperties} = Object;
 const map = {};
-const wrap = (self, type) => (...args) => render(self, () => type(...args));
 let re = null;
 
 const injectStyle = cssText => {
@@ -19,25 +18,6 @@ const injectStyle = cssText => {
   const head = document.head || document.querySelector('head');
   head.insertBefore(style, head.lastChild);
 };
-
-const ref = (self, name) => self ?
-  (self[name] || (self[name] = {current: null})) :
-  {current: null};
-exports.ref = ref;
-
-const render = (where, what) => lighterRender(
-  where,
-  typeof what === 'function' ? what : () => what
-);
-exports.render = render;
-
-const html = (...args) => new Hole('html', args);
-exports.html = html;
-const svg = (...args) => new Hole('svg', args);
-exports.svg = svg;
-
-html.for = lighterHTML.for;
-svg.for = lighterSVG.for;
 
 let i = 0;
 const get = () => {
@@ -53,35 +33,13 @@ const get = () => {
       throw `Unable to retrieve name and tagName`;
 
     const {$1: name, $2: tagName} = RegExp;
-  
-    const {prototype, style} = Class;
-    const configurable = true;
-    const properties = {
-      html: {
-        configurable,
-        get: getHTML
-      },
-      svg: {
-        configurable,
-        get: getSVG
-      }
-    };
-
-    if ('render' in prototype && !('connectedCallback' in prototype))
-      properties.connectedCallback = {
-        configurable,
-        value: connectedCallback
-      };
-
-    if (!('handleEvent' in prototype))
-      properties.handleEvent = {
-        configurable,
-        value: handleEvent
-      };
-
-    defineProperties(prototype, properties);
-
     const is = hyphenized(name) + uid + '-heresy';
+
+    if (customElements.get(is))
+      throw `Duplicated ${is} definition`;
+
+    const {prototype, style} = Class;
+    defineProperties(prototype, augmented(prototype));
     customElements.define(is, Class, {extends: tagName});
     map[name] = {tagName, is};
 
@@ -102,20 +60,12 @@ const get = () => {
 };
 
 const define = defineProperties(get(), {local: {get}});
+const ref = (self, name) => self ?
+  (self[name] || (self[name] = {current: null})) :
+  {current: null};
+
 exports.define = define;
-
-function connectedCallback() {
-  this.render();
-}
-
-function getHTML() {
-  return wrap(this, lighterHTML);
-}
-
-function getSVG() {
-  return wrap(this, lighterSVG);
-}
-
-function handleEvent(event) {
-  this[`on${event.type}`](event);
-}
+exports.ref = ref;
+exports.render = render;
+exports.html = html;
+exports.svg = svg;

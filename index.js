@@ -7,6 +7,44 @@ var heresy = (function (document,exports) {
 
   
 
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+  }
+
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+  }
+
+  function _iterableToArrayLimit(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  }
+
   /*! (c) Andrea Giammarchi - ISC */
   var self = null ||
   /* istanbul ignore next */
@@ -1470,13 +1508,185 @@ var heresy = (function (document,exports) {
     this.args = args;
   }
 
-  var defineProperties = Object.defineProperties;
-  var map = {};
+  /*! (c) Andrea Giammarchi - ISC */
+  var self$2 = null ||
+  /* istanbul ignore next */
+  {};
+
+  try {
+    self$2.Event = new Event('.').constructor;
+  } catch (Event) {
+    try {
+      self$2.Event = new CustomEvent('.').constructor;
+    } catch (Event) {
+      self$2.Event = function Event(type, init) {
+        if (!init) init = {};
+        var e = document.createEvent('Event');
+        var bubbles = !!init.bubbles;
+        var cancelable = !!init.cancelable;
+        e.initEvent(type, bubbles, cancelable);
+
+        try {
+          e.bubbles = bubbles;
+          e.cancelable = cancelable;
+        } catch (e) {}
+
+        return e;
+      };
+    }
+  }
+
+  var Event$1 = self$2.Event;
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var self$3 = null ||
+  /* istanbul ignore next */
+  {};
+
+  try {
+    self$3.WeakSet = WeakSet;
+  } catch (WeakSet) {
+    // requires a global WeakMap (IE11+)
+    (function (WeakMap) {
+      var all = new WeakMap();
+      var proto = WeakSet.prototype;
+
+      proto.add = function (value) {
+        return all.get(this).set(value, 1), this;
+      };
+
+      proto["delete"] = function (value) {
+        return all.get(this)["delete"](value);
+      };
+
+      proto.has = function (value) {
+        return all.get(this).has(value);
+      };
+
+      self$3.WeakSet = WeakSet;
+
+      function WeakSet(iterable) {
+
+        all.set(this, new WeakMap());
+        if (iterable) iterable.forEach(this.add, this);
+      }
+    })(WeakMap);
+  }
+
+  var WeakSet$1 = self$3.WeakSet;
+
+  var getPrototypeOf = Object.getPrototypeOf;
+  var configurable = true;
+  var attributeChangedCallback = 'attributeChangedCallback';
+  var connectedCallback = 'connectedCallback';
+  var disconnectedCallback = "dis".concat(connectedCallback);
+  var ws = new WeakSet$1();
+  var wm$1 = new WeakMap$1();
+
+  var addInit = function addInit(prototype, properties, method) {
+    if (method in prototype) {
+      var original = prototype[method];
+      properties[method] = {
+        configurable: configurable,
+        value: function value() {
+          init.call(this);
+          return original.call(this);
+        }
+      };
+    } else properties[method] = {
+      configurable: configurable,
+      value: init
+    };
+  };
+
+  var augmented = function augmented(prototype) {
+    wm$1.set(prototype, []);
+    var properties = {
+      html: {
+        configurable: configurable,
+        get: getHTML
+      },
+      svg: {
+        configurable: configurable,
+        get: getSVG
+      }
+    };
+    if (!('handleEvent' in prototype)) properties.handleEvent = {
+      configurable: configurable,
+      value: handleEvent
+    };
+    if (!('is' in prototype)) properties.is = {
+      configurable: configurable,
+      get: getIsAttribute
+    }; // setup the init dispatch only if needed
+    // ensure render with an init is triggered after
+
+    if ('oninit' in prototype) {
+      wm$1.get(prototype).push('init');
+      addInit(prototype, properties, 'render');
+    } // ensure all other callbacks are dispatched too
+
+
+    addInit(prototype, properties, attributeChangedCallback);
+    addInit(prototype, properties, connectedCallback);
+    addInit(prototype, properties, disconnectedCallback);
+    [[attributeChangedCallback, 'onattributechanged', onattributechanged], [connectedCallback, 'onconnected', onconnected], [disconnectedCallback, 'ondisconnected', ondisconnected], [connectedCallback, 'render', onconnectedrender]].forEach(function (_ref) {
+      var _ref2 = _slicedToArray(_ref, 3),
+          ce = _ref2[0],
+          he = _ref2[1],
+          _value = _ref2[2];
+
+      if (!(ce in prototype) && he in prototype) {
+        if (he.slice(0, 2) === 'on') wm$1.get(prototype).push(he.slice(2));
+
+        if (ce in properties) {
+          var original = properties[ce].value;
+          properties[ce] = {
+            configurable: configurable,
+            value: function value() {
+              original.apply(this, arguments);
+              return _value.apply(this, arguments);
+            }
+          };
+        } else properties[ce] = {
+          configurable: configurable,
+          value: _value
+        };
+      }
+    });
+    return properties;
+  };
+
+  var html$1 = function html() {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return new Hole('html', args);
+  };
+
+  html$1["for"] = html["for"];
+
+  var svg$1 = function svg() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    return new Hole('svg', args);
+  };
+
+  svg$1["for"] = svg["for"];
+
+  var render$1 = function render$1(where, what) {
+    return render(where, typeof what === 'function' ? what : function () {
+      return what;
+    });
+  };
 
   var wrap = function wrap(self, type) {
     return function () {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        args[_key3] = arguments[_key3];
       }
 
       return render$1(self, function () {
@@ -1485,6 +1695,56 @@ var heresy = (function (document,exports) {
     };
   };
 
+  function addListener(type) {
+    this.addEventListener(type, this);
+  }
+
+  function getHTML() {
+    return wrap(this, html$1);
+  }
+
+  function getSVG() {
+    return wrap(this, svg$1);
+  }
+
+  function getIsAttribute() {
+    return this.getAttribute('is');
+  }
+
+  function handleEvent(event) {
+    this["on".concat(event.type)](event);
+  }
+
+  function init() {
+    if (!ws.has(this)) {
+      ws.add(this);
+      wm$1.get(getPrototypeOf(this)).forEach(addListener, this);
+      this.dispatchEvent(new Event$1('init'));
+    }
+  }
+
+  function onattributechanged(attributeName, oldValue, newValue) {
+    var event = new Event$1('attributechanged');
+    event.attributeName = attributeName;
+    event.oldValue = oldValue;
+    event.newValue = newValue;
+    this.dispatchEvent(event);
+  }
+
+  function onconnected() {
+    this.dispatchEvent(new Event$1('connected'));
+  }
+
+  function onconnectedrender() {
+    this.render();
+  }
+
+  function ondisconnected() {
+    this.dispatchEvent(new Event$1('disconnected'));
+  }
+
+  var defineProperties = Object.defineProperties;
+  var map = {};
   var re = null;
 
   var injectStyle = function injectStyle(cssText) {
@@ -1495,34 +1755,6 @@ var heresy = (function (document,exports) {
     head.insertBefore(style, head.lastChild);
   };
 
-  var ref = function ref(self, name) {
-    return self ? self[name] || (self[name] = {
-      current: null
-    }) : {
-      current: null
-    };
-  };
-  var render$1 = function render$1(where, what) {
-    return render(where, typeof what === 'function' ? what : function () {
-      return what;
-    });
-  };
-  var html$1 = function html() {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
-
-    return new Hole('html', args);
-  };
-  var svg$1 = function svg() {
-    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      args[_key3] = arguments[_key3];
-    }
-
-    return new Hole('svg', args);
-  };
-  html$1["for"] = html["for"];
-  svg$1["for"] = svg["for"];
   var i = 0;
 
   var get = function get() {
@@ -1537,30 +1769,12 @@ var heresy = (function (document,exports) {
       if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Unable to retrieve name and tagName";
       var name = RegExp.$1,
           tagName = RegExp.$2;
+      var is = hyphenizer(name) + uid + '-heresy';
+      if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
       var _Class = Class,
           prototype = _Class.prototype,
           style = _Class.style;
-      var configurable = true;
-      var properties = {
-        html: {
-          configurable: configurable,
-          get: getHTML
-        },
-        svg: {
-          configurable: configurable,
-          get: getSVG
-        }
-      };
-      if ('render' in prototype && !('connectedCallback' in prototype)) properties.connectedCallback = {
-        configurable: configurable,
-        value: connectedCallback
-      };
-      if (!('handleEvent' in prototype)) properties.handleEvent = {
-        configurable: configurable,
-        value: handleEvent
-      };
-      defineProperties(prototype, properties);
-      var is = hyphenizer(name) + uid + '-heresy';
+      defineProperties(prototype, augmented(prototype));
       customElements.define(is, Class, {
         "extends": tagName
       });
@@ -1589,21 +1803,13 @@ var heresy = (function (document,exports) {
     }
   });
 
-  function connectedCallback() {
-    this.render();
-  }
-
-  function getHTML() {
-    return wrap(this, html);
-  }
-
-  function getSVG() {
-    return wrap(this, svg);
-  }
-
-  function handleEvent(event) {
-    this["on".concat(event.type)](event);
-  }
+  var ref = function ref(self, name) {
+    return self ? self[name] || (self[name] = {
+      current: null
+    }) : {
+      current: null
+    };
+  };
 
   exports.define = define;
   exports.html = html$1;
