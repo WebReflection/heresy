@@ -1,6 +1,6 @@
 {
   "name": "heresy",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "lighterhtml based custom elements builtins",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -24,7 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^0.14.0"
+    "lighterhtml": "^0.14.1"
   },
   "devDependencies": {
     "@babel/core": "^7.4.4",
