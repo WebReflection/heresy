@@ -24,7 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^0.12.0"
+    "lighterhtml": "^0.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.4.4",

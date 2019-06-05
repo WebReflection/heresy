@@ -738,12 +738,25 @@ var heresy = (function (document,exports) {
           break;
 
         case COMMENT_NODE:
-          if (child.textContent === UID) {
+          var textContent = child.textContent;
+
+          if (textContent === UID) {
             parts.shift();
             holes.push( // basicHTML or other non standard engines
             // might end up having comments in nodes
             // where they shouldn't, hence this check.
             SHOULD_USE_TEXT_CONTENT.test(node.nodeName) ? create('text', node, path) : create('any', child, path.concat(i)));
+          } else {
+            switch (textContent.slice(0, 2)) {
+              case '/*':
+                if (textContent.slice(-2) !== '*/') break;
+
+              case "\uD83D\uDC7B":
+                // ghost
+                node.removeChild(child);
+                i--;
+                length--;
+            }
           }
 
           break;
@@ -1070,19 +1083,12 @@ var heresy = (function (document,exports) {
 
 
   var hyperProperty = function hyperProperty(node, name) {
-    var oldValue;
-    return function (newValue) {
-      if (oldValue !== newValue) {
-        oldValue = newValue;
-
-        if (node[name] !== newValue) {
-          if (newValue == null) {
-            // cleanup before dropping the attribute to fix IE/Edge gotcha
-            node[name] = '';
-            node.removeAttribute(name);
-          } else node[name] = newValue;
-        }
-      }
+    return function (value) {
+      if (value == null) {
+        // cleanup before dropping the attribute to fix IE/Edge gotcha
+        node[name] = '';
+        node.removeAttribute(name);
+      } else node[name] = value;
     };
   }; // special hooks helpers
 
