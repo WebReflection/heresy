@@ -250,7 +250,7 @@ Every global builtin extend will have a `-heresy` suffix to ensure both that the
   opacity: .8;
 }
 
-/* ⚠ usable only via define, not define.local */
+/* ⚠ usable only via define, not for local / nested components */
 tag[is='specific-heresy'] {
   display: block;
 }
