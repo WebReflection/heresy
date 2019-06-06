@@ -1798,10 +1798,10 @@ var heresy = (function (document,exports) {
 
   var construct = Reflect.construct,
       setPrototypeOf = Reflect.setPrototypeOf;
-  var transpiled = false; // the angry koala check @WebReflection/status/1133757401482584064
+  var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
 
   try {
-    transpiled = !!new {
+    transpiled = new {
       o: function o() {}
     }.o();
   } catch ($) {}

@@ -1,9 +1,9 @@
 'use strict';
 const {construct, setPrototypeOf} = Reflect;
 
-let transpiled = false;
+let transpiled = null;
 // the angry koala check @WebReflection/status/1133757401482584064
-try { transpiled = !!new {o(){}}.o; } catch($) {}
+try { transpiled = new {o(){}}.o; } catch($) {}
 
 Object.defineProperty(exports, '__esModule', {value: true}).default = transpiled ?
   function (Super) {
