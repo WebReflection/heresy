@@ -1,6 +1,7 @@
 import Event from '@ungap/event';
 import WeakMap from '@ungap/weakmap';
 import WeakSet from '@ungap/weakset';
+import tl from '@ungap/template-literal';
 
 import {
   Hole,
@@ -9,8 +10,15 @@ import {
   svg as lighterSVG
 } from 'lighterhtml';
 
-const {getPrototypeOf} = Object;
+import {replace} from './registry.js';
 
+export const secret = '__heresy__';
+
+const {defineProperties, freeze} = Object;
+
+const $html = new WeakMap;
+const $svg = new WeakMap;
+const $template = new WeakMap;
 const configurable = true;
 
 const attributeChangedCallback = 'attributeChangedCallback';
@@ -18,7 +26,6 @@ const connectedCallback = 'connectedCallback';
 const disconnectedCallback = `dis${connectedCallback}`;
 
 const ws = new WeakSet;
-const wm = new WeakMap;
 
 const addInit = (prototype, properties, method) => {
   if (method in prototype) {
@@ -40,8 +47,7 @@ const addInit = (prototype, properties, method) => {
 
 const augmented = prototype => {
 
-  wm.set(prototype, []);
-
+  const __heresy__ = [];
   const properties = {
     html: {
       configurable,
@@ -52,6 +58,8 @@ const augmented = prototype => {
       get: getSVG
     }
   };
+
+  properties[secret] = {value: __heresy__};
 
   if (!('handleEvent' in prototype))
     properties.handleEvent = {
@@ -68,7 +76,7 @@ const augmented = prototype => {
   // setup the init dispatch only if needed
   // ensure render with an init is triggered after
   if ('oninit' in prototype) {
-    wm.get(prototype).push('init');
+    __heresy__.push('init');
     addInit(prototype, properties, 'render');
   }
 
@@ -101,7 +109,7 @@ const augmented = prototype => {
   ].forEach(([ce, he, value]) => {
     if (!(ce in prototype) && he in prototype) {
       if (he.slice(0, 2) === 'on')
-        wm.get(prototype).push(he.slice(2));
+        __heresy__.push(he.slice(2));
       if (ce in properties) {
         const original = properties[ce].value;
         properties[ce] = {
@@ -117,7 +125,7 @@ const augmented = prototype => {
     }
   });
 
-  return properties;
+  defineProperties(prototype, properties);
 };
 
 const html = (...args) => new Hole('html', args);
@@ -131,7 +139,28 @@ const render = (where, what) => lighterRender(
   typeof what === 'function' ? what : () => what
 );
 
-const wrap = (self, type) => (...args) => render(self, () => type(...args));
+const setParsed = (template, info) => {
+  if (info) {
+    const value = replace(template.join(secret), info).split(secret);
+    $template.set(template, value);
+    defineProperties(value, {raw: {value}});
+    return freeze(value);
+  }
+  return template;
+};
+
+const setWrap = (self, type, wm) => {
+  const fn = wrap(self, type);
+  wm.set(self, fn);
+  return fn;
+};
+
+const wrap = (self, type) => (tpl, ...values) => {
+  const template = tl(tpl);
+  const local = $template.get(template) ||
+                setParsed(template, self.constructor[secret]);
+  return lighterRender(self, () => type(local, ...values));
+};
 
 export {
   augmented,
@@ -143,11 +172,11 @@ function addListener(type) {
 }
 
 function getHTML() {
-  return wrap(this, html);
+  return $html.get(this) || setWrap(this, html, $html);
 }
 
 function getSVG() {
-  return wrap(this, svg);
+  return $svg.get(this) || setWrap(this, svg, $svg);
 }
 
 function getIsAttribute() {
@@ -161,7 +190,7 @@ function handleEvent(event) {
 function init() {
   if (!ws.has(this)) {
     ws.add(this);
-    wm.get(getPrototypeOf(this)).forEach(addListener, this);
+    this[secret].forEach(addListener, this);
     this.dispatchEvent(new Event('init'));
   }
 }

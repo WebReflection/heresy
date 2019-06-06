@@ -3,10 +3,8 @@ import Item from './item.js';
 
 const {define, html, ref} = heresy;
 
-// local definition, both Hide and Item can be used as name elsewhere
-const {local} = define;
-local('Hide', Hide);
-local('Item', Item);
+define('Hide', Hide);
+define('Item', Item);
 
 const _items = new WeakMap;
 

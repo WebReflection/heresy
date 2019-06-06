@@ -11,6 +11,7 @@ The following example is [live in Code Pen](https://codepen.io/WebReflection/pen
 ```js
 import {define, html, render} from 'heresy';
 
+// classes or objects, to define components, are the same
 class MyButton extends HTMLButtonElement {
 
   // (optional) static fields to define the component/class name or tag
@@ -77,11 +78,6 @@ define(MyButton);
 
 // or define the custom element via Component:tag
 define('MyButton:button', MyButton);
-
-// **experimental** optionally usable for local components definition
-const {local} = define;
-local(MyButton);
-local('MyButton:button', MyButton);
 
 // populate some node
 render(document.body, html`<MyButton props=${{name: 'Magic'}} />`);
@@ -172,21 +168,77 @@ render(document.body, html`
 console.log(refs.h1.current); // the H1 instance/node
 ```
 
-### About the experimental `local` definition
+### About nested/local custom elements definition
 
-Currently, using `define.local` instead of `define` simply grants that a specific `TagName` can be redefined at any time.
+This project brings local components definition avoiding the following issues:
 
-However, the definition of the previous `TagName` won't necessarily match anymore the class, or object, used before, so that it's higly discourage, at least at this point and until there is a better mechanism in place, to rely on the local functionality.
+  * name clashing, just call `<Item>` anything you think should act like an item
+  * single class/object to define multiple components, just import the same class/object and `includes` it with in the component
+  * components in isolation don't even need to have DOM around
 
+#### Local components example
 
+You can see the [following example live](https://webreflection.github.io/heresy/test/local.html).
+```js
+// p.js - could be an object too
+export default class extends HTMLParagraphElement {
+  static get tagName() { return 'p'; }
+  oninit() {
+    console.log(this.outerHTML);
+  }
+};
 
-## Goals
+// first.js - it has a local P
+import P from './p.js';
+export default {
+  extends: 'div',
+  includes: {P},
+  render() {
+    this.html`<P>first</P>`;
+  }
+};
+
+// second.js - it uses P again as local
+import P from './p.js';
+export default {
+  extends: 'div',
+  includes: {P},
+  render() {
+    this.html`<P>second</P>`;
+  }
+};
+
+// index.js
+const {define, render, html} = heresy;
+
+import First from './first.js';
+import Second from './second.js';
+
+const Div = define('Div', {
+  extends: 'div',
+  includes: {First, Second},
+  render() {
+    this.html`<First/><Second/>`;
+  }
+});
+
+// either
+render(document.body, html`<Div/>`);
+// or even document.body.appendChild(Div.new());
+
+```
+
+## Overall Goals
 
   * declared elements are the instance you'd expect (no virtual, no facade)
   * declared elements can be of any kind (table, tr, select, option, ...)
+  * declare any component within other components breaking the limits of a single, name-clashing based, registry
   * any attribute change, or node lifecycle, can be tracked via Custom Elements V1 API (no componentDidMount and friends)
+  * `oninit`, `onconnected`, `ondisconnected`, and `onattributechanged` events out of the box
+  * `handleEvent` paradigm out of the box
   * no redundant dom nodes, no ghost fragments, a clean as possible output
-  * it's SSR (Server Side Rendering) friendly
+  * the lighterhtml performance, fine tuned for this specific use case
+  * it's SSR (Server Side Rendering) friendly, and custom elements hydrate automatically
 
 
 ## CSS - How to query or style globally defined components
@@ -206,10 +258,12 @@ tag[is='specific-heresy'] {
 
 ## CSS - How to query or style locally defined components
 
-When `define.local(...)` is used instead, the suffix will have an incremental number. Instead of addressing a specific suffix, it is suggested to address the prefix.
+When components are defined locally, there will be an incremental number between the component name and `-heresy` suffix.
+
+Instead of addressing a specific suffix, it is indeed suggested to address the prefix.
 
 ```css
-/* ℹ usable for both define and define.local */
+/* ℹ usable for both global registered components and nested */
 tag[is^='my-button-'] {
   display: block;
 }

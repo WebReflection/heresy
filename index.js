@@ -94,10 +94,6 @@ var heresy = (function (document,exports) {
     throw new TypeError("Invalid attempt to destructure non-iterable instance");
   }
 
-  function hyphenizer(s, c) {
-    return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
-  }
-
   /*! (c) Andrea Giammarchi - ISC */
   var self = null ||
   /* istanbul ignore next */
@@ -150,6 +146,10 @@ var heresy = (function (document,exports) {
   }
 
   var WeakMap$1 = self.WeakMap;
+
+  function hyphenizer(s, c) {
+    return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
+  }
 
   /*! (c) Andrea Giammarchi - ISC */
   var templateLiteral = function () {
@@ -1628,13 +1628,71 @@ var heresy = (function (document,exports) {
 
   var WeakSet$1 = self$3.WeakSet;
 
-  var getPrototypeOf = Object.getPrototypeOf;
+  /*! (c) Andrea Giammarchi - ISC */
+  var templateLiteral$1 = function () {
+
+    var UA,
+        RAW = 'raw';
+    var isNoOp = false;
+
+    var _templateLiteral = function templateLiteral(tl) {
+      if ( // for badly transpiled literals
+      !(RAW in tl) || // for some version of TypeScript
+      tl.propertyIsEnumerable(RAW) || // and some other version of TypeScript
+      !Object.isFrozen(tl[RAW]) || // or for Firefox < 55
+      /(Firefox|Safari)\/(\d+)/.test(UA = (document.defaultView.navigator || {}).userAgent) && (RegExp.$1 == 'Firefox' ? RegExp.$2 < 55 : !/(Chrome|Android)\/(\d+)/.test(UA))) {
+        var forever = {};
+
+        _templateLiteral = function templateLiteral(tl) {
+          for (var key = '.', i = 0; i < tl.length; i++) {
+            key += tl[i].length + '.' + tl[i];
+          }
+
+          return forever[key] || (forever[key] = tl);
+        };
+      } else {
+        isNoOp = true;
+      }
+
+      return TL(tl);
+    };
+
+    return TL;
+
+    function TL(tl) {
+      return isNoOp ? tl : _templateLiteral(tl);
+    }
+  }();
+
+  var registry = {
+    map: {},
+    re: null
+  };
+  var regExp = function regExp(keys) {
+    return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9_])"), 'g');
+  };
+  var replace = function replace(markup, info) {
+    var map = info.map,
+        re = info.re;
+    return markup.replace(re, function (_, close, name, after) {
+      var _map$name = map[name],
+          tagName = _map$name.tagName,
+          is = _map$name.is;
+      return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+    });
+  };
+
+  var secret = '__heresy__';
+  var defineProperties = Object.defineProperties,
+      freeze = Object.freeze;
+  var $html = new WeakMap$1();
+  var $svg = new WeakMap$1();
+  var $template = new WeakMap$1();
   var configurable = true;
   var attributeChangedCallback = 'attributeChangedCallback';
   var connectedCallback = 'connectedCallback';
   var disconnectedCallback = "dis".concat(connectedCallback);
   var ws = new WeakSet$1();
-  var wm$1 = new WeakMap$1();
 
   var addInit = function addInit(prototype, properties, method) {
     if (method in prototype) {
@@ -1653,7 +1711,7 @@ var heresy = (function (document,exports) {
   };
 
   var augmented = function augmented(prototype) {
-    wm$1.set(prototype, []);
+    var __heresy__ = [];
     var properties = {
       html: {
         configurable: configurable,
@@ -1663,6 +1721,9 @@ var heresy = (function (document,exports) {
         configurable: configurable,
         get: getSVG
       }
+    };
+    properties[secret] = {
+      value: __heresy__
     };
     if (!('handleEvent' in prototype)) properties.handleEvent = {
       configurable: configurable,
@@ -1675,7 +1736,8 @@ var heresy = (function (document,exports) {
     // ensure render with an init is triggered after
 
     if ('oninit' in prototype) {
-      wm$1.get(prototype).push('init');
+      __heresy__.push('init');
+
       addInit(prototype, properties, 'render');
     } // ensure all other callbacks are dispatched too
 
@@ -1690,7 +1752,7 @@ var heresy = (function (document,exports) {
           _value = _ref2[2];
 
       if (!(ce in prototype) && he in prototype) {
-        if (he.slice(0, 2) === 'on') wm$1.get(prototype).push(he.slice(2));
+        if (he.slice(0, 2) === 'on') __heresy__.push(he.slice(2));
 
         if (ce in properties) {
           var original = properties[ce].value;
@@ -1707,7 +1769,7 @@ var heresy = (function (document,exports) {
         };
       }
     });
-    return properties;
+    defineProperties(prototype, properties);
   };
 
   var html$1 = function html() {
@@ -1736,14 +1798,37 @@ var heresy = (function (document,exports) {
     });
   };
 
+  var setParsed = function setParsed(template, info) {
+    if (info) {
+      var value = replace(template.join(secret), info).split(secret);
+      $template.set(template, value);
+      defineProperties(value, {
+        raw: {
+          value: value
+        }
+      });
+      return freeze(value);
+    }
+
+    return template;
+  };
+
+  var setWrap = function setWrap(self, type, wm) {
+    var fn = wrap(self, type);
+    wm.set(self, fn);
+    return fn;
+  };
+
   var wrap = function wrap(self, type) {
-    return function () {
-      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-        args[_key3] = arguments[_key3];
+    return function (tpl) {
+      for (var _len3 = arguments.length, values = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+        values[_key3 - 1] = arguments[_key3];
       }
 
-      return render$1(self, function () {
-        return type.apply(void 0, args);
+      var template = templateLiteral$1(tpl);
+      var local = $template.get(template) || setParsed(template, self.constructor[secret]);
+      return render(self, function () {
+        return type.apply(void 0, [local].concat(values));
       });
     };
   };
@@ -1753,11 +1838,11 @@ var heresy = (function (document,exports) {
   }
 
   function getHTML() {
-    return wrap(this, html$1);
+    return $html.get(this) || setWrap(this, html$1, $html);
   }
 
   function getSVG() {
-    return wrap(this, svg$1);
+    return $svg.get(this) || setWrap(this, svg$1, $svg);
   }
 
   function getIsAttribute() {
@@ -1771,7 +1856,7 @@ var heresy = (function (document,exports) {
   function init() {
     if (!ws.has(this)) {
       ws.add(this);
-      wm$1.get(getPrototypeOf(this)).forEach(addListener, this);
+      this[secret].forEach(addListener, this);
       this.dispatchEvent(new Event$1('init'));
     }
   }
@@ -1797,6 +1882,7 @@ var heresy = (function (document,exports) {
   }
 
   var construct = Reflect.construct,
+      getPrototypeOf = Reflect.getPrototypeOf,
       setPrototypeOf = Reflect.setPrototypeOf;
   var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
 
@@ -1806,10 +1892,10 @@ var heresy = (function (document,exports) {
     }.o();
   } catch ($) {}
 
-  var extend = transpiled ? function (Super) {
-    var Class = function Class() {
-      return construct(Super, arguments, Class);
-    };
+  var extend = transpiled ? function (Super, cutTheMiddleMan) {
+    function Class() {
+      return construct(cutTheMiddleMan ? getPrototypeOf(Super) : Super, arguments, Class);
+    }
 
     setPrototypeOf(Class, Super);
     setPrototypeOf(Class.prototype, Super.prototype);
@@ -1831,8 +1917,9 @@ var heresy = (function (document,exports) {
     );
   };
 
-  var defineProperty = Object.defineProperty,
-      defineProperties = Object.defineProperties,
+  var create$1 = Object.create,
+      defineProperty = Object.defineProperty,
+      defineProperties$1 = Object.defineProperties,
       getOwnPropertyNames = Object.getOwnPropertyNames,
       getOwnPropertySymbols = Object.getOwnPropertySymbols,
       getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
@@ -1840,9 +1927,79 @@ var heresy = (function (document,exports) {
   var HTML = {
     element: HTMLElement
   };
-  var map = {};
-  var re = null;
-  var init$1 = true;
+  var cc = new WeakMap$1();
+  var oc = new WeakMap$1();
+
+  var define = function define($, definition) {
+    var _ref = typeof $ === 'string' ? register($, definition, '') : register(definition.name, definition, ''),
+        Class = _ref.Class,
+        is = _ref.is,
+        name = _ref.name,
+        tagName = _ref.tagName;
+
+    setupIncludes(Class);
+    registry.map[name] = {
+      tagName: tagName,
+      is: is
+    };
+    registry.re = regExp(keys(registry.map));
+    return Class;
+  };
+
+  var fromClass = function fromClass(constructor) {
+    var Class = extend(constructor, false);
+    augmented(Class.prototype);
+    cc.set(constructor, Class);
+    return Class;
+  };
+
+  var fromObject = function fromObject(object) {
+    var _grabInfo = grabInfo(object),
+        statics = _grabInfo.statics,
+        prototype = _grabInfo.prototype,
+        tag = _grabInfo.tag;
+
+    var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
+    augmented(defineProperties$1(Class.prototype, prototype));
+    oc.set(object, defineProperties$1(Class, statics));
+    return Class;
+  };
+
+  var getTag = function getTag(Class) {
+    return Class.tagName || Class["extends"];
+  };
+
+  var grabInfo = function grabInfo(object) {
+    var statics = create$1(null);
+    var prototype = create$1(null);
+    var info = {
+      statics: statics,
+      prototype: prototype,
+      tag: getTag(object)
+    };
+    getOwnPropertyNames(object).concat(getOwnPropertySymbols(object)).forEach(function (name) {
+      var descriptor = getOwnPropertyDescriptor(object, name);
+      descriptor.enumerable = false;
+
+      switch (name) {
+        case 'extends':
+          name = 'tagName';
+
+        case 'contains':
+        case 'includes':
+        case 'name':
+        case 'observedAttributes':
+        case 'style':
+        case 'tagName':
+          statics[name] = descriptor;
+          break;
+
+        default:
+          prototype[name] = descriptor;
+      }
+    });
+    return info;
+  };
 
   var injectStyle = function injectStyle(cssText) {
     var style = document.createElement('style');
@@ -1852,97 +2009,6 @@ var heresy = (function (document,exports) {
     head.insertBefore(style, head.lastChild);
   };
 
-  var fromObject = function fromObject(object) {
-    var tag = getTag(object);
-    var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor));
-    getOwnPropertyNames(object).concat(getOwnPropertySymbols(object)).forEach(function (name) {
-      var descriptor = getOwnPropertyDescriptor(object, name);
-      descriptor.enumerable = false;
-
-      switch (name) {
-        case 'extends':
-          name = 'tagName';
-
-        case 'name':
-        case 'observedAttributes':
-        case 'style':
-        case 'tagName':
-          defineProperty(Class, name, descriptor);
-          break;
-
-        default:
-          defineProperty(Class.prototype, name, descriptor);
-      }
-    });
-    return Class;
-  };
-
-  var getTag = function getTag(Class) {
-    return Class.tagName || Class["extends"];
-  };
-
-  var i = 0;
-
-  var get = function get() {
-    var uid = i ? '-' + i : '';
-    i++;
-    return function ($, Class) {
-      if (typeof $ !== 'string') {
-        Class = $;
-        $ = Class.name;
-      }
-
-      if ($.indexOf(':') < 0) $ += ':' + getTag(Class);
-      if (typeof(Class) === 'object') Class = fromObject(Class);
-      if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Invalid name or tagName";
-      var name = RegExp.$1,
-          tagName = RegExp.$2;
-      var is = hyphenizer(name) + uid + '-heresy';
-      if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-      var _Class = Class,
-          prototype = _Class.prototype,
-          style = _Class.style;
-      defineProperties(prototype, augmented(prototype));
-      customElements.define(is, Class, {
-        "extends": tagName
-      });
-      map[name] = {
-        tagName: tagName,
-        is: is
-      };
-      if (!('new' in Class)) defineProperty(Class, 'new', {
-        value: function value() {
-          return document.createElement(tagName, {
-            is: is
-          });
-        }
-      });
-      if (style) injectStyle(style.call(Class, "".concat(tagName, "[is=\"").concat(is, "\"]")));
-
-      if (init$1) {
-        init$1 = false;
-        transform(function (markup) {
-          return markup.replace(re, function (_, close, name, after) {
-            var _map$name = map[name],
-                tagName = _map$name.tagName,
-                is = _map$name.is;
-            return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
-          });
-        });
-      }
-
-      var heresy = keys(map).join('|');
-      re = new RegExp("<(/)?(".concat(heresy, ")([^A-Za-z0-9_])"), 'g');
-      return Class;
-    };
-  };
-
-  var define = defineProperties(get(), {
-    local: {
-      get: get
-    }
-  });
-
   var ref = function ref(self, name) {
     return self ? self[name] || (self[name] = {
       current: null
@@ -1950,6 +2016,68 @@ var heresy = (function (document,exports) {
       current: null
     };
   };
+
+  var register = function register($, definition, uid) {
+    if ($.indexOf(':') < 0) $ += ':' + getTag(definition);
+    if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Invalid name or tagName";
+    var name = RegExp.$1,
+        tagName = RegExp.$2;
+    var is = hyphenizer(name) + uid + '-heresy';
+    if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition) : cc.get(definition) || fromClass(definition), true);
+    customElements.define(is, Class, {
+      "extends": tagName
+    });
+    defineProperty(Class, 'new', {
+      value: function value() {
+        return document.createElement(tagName, {
+          is: is
+        });
+      }
+    });
+    if ('style' in Class) injectStyle(Class.style("".concat(tagName, "[is=\"").concat(is, "\"]")));
+    return {
+      Class: Class,
+      is: is,
+      name: name,
+      tagName: tagName
+    };
+  };
+
+  var index = 0;
+
+  var setupIncludes = function setupIncludes(Class) {
+    var includes = Class.includes || Class.contains;
+
+    if (includes) {
+      var uid = '-' + ++index;
+      var map = {};
+      keys(includes).forEach(function ($) {
+        var _register = register($, includes[$], uid),
+            Class = _register.Class,
+            is = _register.is,
+            name = _register.name,
+            tagName = _register.tagName;
+
+        map[name] = {
+          tagName: tagName,
+          is: is
+        };
+        setupIncludes(Class);
+      });
+      var re = regExp(keys(map));
+      defineProperty(Class, secret, {
+        value: {
+          map: map,
+          re: re
+        }
+      });
+    }
+  };
+
+  transform(function (markup) {
+    return replace(markup, registry);
+  });
 
   exports.define = define;
   exports.html = html$1;
