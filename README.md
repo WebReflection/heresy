@@ -56,13 +56,29 @@ class MyButton extends HTMLButtonElement {
   get is () {}
 }
 
+// components can be defined both as classes or objects
+const Generic = {
+
+  // both name and extends are optional
+  // if defined via define('Name:extends', object)
+  name: 'Generic',
+  extends: 'element', // or div, p, etc
+
+  // statics are defined on the derived class
+  style(selector) {},
+  observedAttributes: [],
+
+  // all events supported too
+  oninit() {}
+};
+
 // define the custom element via class (requires static name and tagName)
 define(MyButton);
 
 // or define the custom element via Component:tag
 define('MyButton:button', MyButton);
 
-// optionally usable for local components definition
+// **experimental** optionally usable for local components definition
 const {local} = define;
 local(MyButton);
 local('MyButton:button', MyButton);
@@ -155,6 +171,13 @@ render(document.body, html`
 
 console.log(refs.h1.current); // the H1 instance/node
 ```
+
+### About the experimental `local` definition
+
+Currently, using `define.local` instead of `define` simply grants that a specific `TagName` can be redefined at any time.
+
+However, the definition of the previous `TagName` won't necessarily match anymore the class, or object, used before, so that it's higly discourage, at least at this point and until there is a better mechanism in place, to rely on the local functionality.
+
 
 
 ## Goals

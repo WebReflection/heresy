@@ -5,14 +5,16 @@ const {define, html, ref} = heresy;
 
 // local definition, both Hide and Item can be used as name elsewhere
 const {local} = define;
-local('Hide:label', Hide);
-local('Item:li', Item);
+local('Hide', Hide);
+local('Item', Item);
 
 const _items = new WeakMap;
 
-class Todo extends HTMLDivElement {
+export default {
 
-  static style(selector) {
+  extends: 'div',
+
+  style(selector) {
     return `
     ${selector} > ul {
       max-height: 146px;
@@ -25,20 +27,20 @@ class Todo extends HTMLDivElement {
     ${selector}.todo-only > ul > .checked {
       display: none;
     }`;
-  }
+  },
 
-  get items() { return _items.get(this) || []; }
+  get items() { return _items.get(this) || []; },
   set items(items) {
     _items.set(this, items);
     this.render();
-  }
+  },
 
   render() {
     this.html`
     <input placeholder="type item" onkeydown=${this}>
     <Hide ref=${ref(this, 'hide')} onchange=${this}/>
     <ul>${this.items.map(data => html`<Item data=${data}/>`)}</ul>`;
-  }
+  },
 
   onkeydown(event) {
     if (event.key !== 'Enter')
@@ -68,11 +70,10 @@ class Todo extends HTMLDivElement {
         }
       }
     }
-  }
+  },
 
   onchange() {
     this.classList.toggle('todo-only', this.hide.current.checked);
   }
-}
 
-export default Todo;
+};

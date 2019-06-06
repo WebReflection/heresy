@@ -25,6 +25,6 @@ export default {
   output: {
     file: 'es.js',
     format: 'iife',
-    name: 'lighterhtml'
+    name: 'heresy'
   }
 };

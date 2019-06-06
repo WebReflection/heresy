@@ -1,11 +1,60 @@
 var heresy = (function (document,exports) {
   'use strict';
 
-  function hyphenizer(s, c) {
-    return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
+  
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) _setPrototypeOf(subClass, superClass);
+  }
+
+  function _getPrototypeOf(o) {
+    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+      return o.__proto__ || Object.getPrototypeOf(o);
+    };
+    return _getPrototypeOf(o);
+  }
+
+  function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+      o.__proto__ = p;
+      return o;
+    };
+
+    return _setPrototypeOf(o, p);
+  }
+
+  function _assertThisInitialized(self) {
+    if (self === void 0) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return self;
+  }
+
+  function _possibleConstructorReturn(self, call) {
+    if (call && (typeof call === "object" || typeof call === "function")) {
+      return call;
+    }
+
+    return _assertThisInitialized(self);
+  }
 
   function _slicedToArray(arr, i) {
     return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
@@ -43,6 +92,10 @@ var heresy = (function (document,exports) {
 
   function _nonIterableRest() {
     throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  }
+
+  function hyphenizer(s, c) {
+    return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
   }
 
   /*! (c) Andrea Giammarchi - ISC */
@@ -1743,9 +1796,53 @@ var heresy = (function (document,exports) {
     this.dispatchEvent(new Event$1('disconnected'));
   }
 
-  var defineProperties = Object.defineProperties;
+  var construct = Reflect.construct,
+      setPrototypeOf = Reflect.setPrototypeOf;
+  var transpiled = false; // the angry koala check @WebReflection/status/1133757401482584064
+
+  try {
+    transpiled = !!new {
+      o: function o() {}
+    }.o();
+  } catch ($) {}
+
+  var extend = transpiled ? function (Super) {
+    var Class = function Class() {
+      return construct(Super, arguments, Class);
+    };
+
+    setPrototypeOf(Class, Super);
+    setPrototypeOf(Class.prototype, Super.prototype);
+    return Class;
+  } : function (Super) {
+    return (
+      /*#__PURE__*/
+      function (_Super) {
+        _inherits(_class, _Super);
+
+        function _class() {
+          _classCallCheck(this, _class);
+
+          return _possibleConstructorReturn(this, _getPrototypeOf(_class).apply(this, arguments));
+        }
+
+        return _class;
+      }(Super)
+    );
+  };
+
+  var defineProperty = Object.defineProperty,
+      defineProperties = Object.defineProperties,
+      getOwnPropertyNames = Object.getOwnPropertyNames,
+      getOwnPropertySymbols = Object.getOwnPropertySymbols,
+      getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
+      keys = Object.keys;
+  var HTML = {
+    element: HTMLElement
+  };
   var map = {};
   var re = null;
+  var init$1 = true;
 
   var injectStyle = function injectStyle(cssText) {
     var style = document.createElement('style');
@@ -1755,18 +1852,49 @@ var heresy = (function (document,exports) {
     head.insertBefore(style, head.lastChild);
   };
 
+  var fromObject = function fromObject(object) {
+    var tag = getTag(object);
+    var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor));
+    getOwnPropertyNames(object).concat(getOwnPropertySymbols(object)).forEach(function (name) {
+      var descriptor = getOwnPropertyDescriptor(object, name);
+      descriptor.enumerable = false;
+
+      switch (name) {
+        case 'extends':
+          name = 'tagName';
+
+        case 'name':
+        case 'observedAttributes':
+        case 'style':
+        case 'tagName':
+          defineProperty(Class, name, descriptor);
+          break;
+
+        default:
+          defineProperty(Class.prototype, name, descriptor);
+      }
+    });
+    return Class;
+  };
+
+  var getTag = function getTag(Class) {
+    return Class.tagName || Class["extends"];
+  };
+
   var i = 0;
 
   var get = function get() {
     var uid = i ? '-' + i : '';
     i++;
     return function ($, Class) {
-      if (typeof $ === 'function') {
+      if (typeof $ !== 'string') {
         Class = $;
-        $ = Class.name + ':' + Class.tagName;
+        $ = Class.name;
       }
 
-      if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Unable to retrieve name and tagName";
+      if ($.indexOf(':') < 0) $ += ':' + getTag(Class);
+      if (typeof(Class) === 'object') Class = fromObject(Class);
+      if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Invalid name or tagName";
       var name = RegExp.$1,
           tagName = RegExp.$2;
       var is = hyphenizer(name) + uid + '-heresy';
@@ -1783,15 +1911,20 @@ var heresy = (function (document,exports) {
         is: is
       };
       if (style) injectStyle(style.call(Class, "".concat(tagName, "[is=\"").concat(is, "\"]")));
-      if (!re) transform(function (markup) {
-        return markup.replace(re, function (_, close, name, after) {
-          var _map$name = map[name],
-              tagName = _map$name.tagName,
-              is = _map$name.is;
-          return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+
+      if (init$1) {
+        init$1 = false;
+        transform(function (markup) {
+          return markup.replace(re, function (_, close, name, after) {
+            var _map$name = map[name],
+                tagName = _map$name.tagName,
+                is = _map$name.is;
+            return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+          });
         });
-      });
-      var heresy = Object.keys(map).join('|');
+      }
+
+      var heresy = keys(map).join('|');
       re = new RegExp("<(/)?(".concat(heresy, ")([^A-Za-z0-9_])"), 'g');
       return Class;
     };

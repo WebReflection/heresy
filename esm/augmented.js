@@ -1,13 +1,13 @@
+import Event from '@ungap/event';
+import WeakMap from '@ungap/weakmap';
+import WeakSet from '@ungap/weakset';
+
 import {
   Hole,
   render as lighterRender,
   html as lighterHTML,
   svg as lighterSVG
 } from 'lighterhtml';
-
-import Event from '@ungap/event';
-import WeakMap from '@ungap/weakmap';
-import WeakSet from '@ungap/weakset';
 
 const {getPrototypeOf} = Object;
 
@@ -60,10 +60,10 @@ const augmented = prototype => {
     };
 
   if (!('is' in prototype))
-  properties.is = {
-    configurable,
-    get: getIsAttribute
-  };
+    properties.is = {
+      configurable,
+      get: getIsAttribute
+    };
 
   // setup the init dispatch only if needed
   // ensure render with an init is triggered after

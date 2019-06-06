@@ -1,8 +1,10 @@
 const _data = new WeakMap;
 
-class Item extends HTMLLIElement {
+export default {
 
-  static style(selector) {
+  extends: 'li',
+
+  style(selector) {
     return `
     ${selector} {
       list-style: none;
@@ -20,13 +22,13 @@ class Item extends HTMLLIElement {
       display: block;
       cursor: pointer;
     }`;
-  }
+  },
 
-  get data() { return _data.get(this); }
+  get data() { return _data.get(this); },
   set data(data) {
     _data.set(this, data);
     this.render();
-  }
+  },
 
   render() {
     const {checked, text} = this.data;
@@ -35,26 +37,24 @@ class Item extends HTMLLIElement {
       <input type=checkbox checked=${checked} onchange=${this}>
       <span>${text}</span>
     </label>`;
-  }
+  },
 
   flush() {
     this.addEventListener('transitionend', this);
     this.classList.add('flush');
-  }
+  },
 
   oninit(event) {
     console.log(event);
-  }
+  },
 
   onchange() {
     const {data} = this;
     data.checked = !data.checked;
     this.classList.toggle('checked', data.checked);
-  }
+  },
 
   ontransitionend() {
     this.classList.remove('flush');
   }
 }
-
-export default Item;

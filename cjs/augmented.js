@@ -1,14 +1,14 @@
 'use strict';
+const Event = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/event'));
+const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
+const WeakSet = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakset'));
+
 const {
   Hole,
   render: lighterRender,
   html: lighterHTML,
   svg: lighterSVG
 } = require('lighterhtml');
-
-const Event = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/event'));
-const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
-const WeakSet = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakset'));
 
 const {getPrototypeOf} = Object;
 
@@ -61,10 +61,10 @@ const augmented = prototype => {
     };
 
   if (!('is' in prototype))
-  properties.is = {
-    configurable,
-    get: getIsAttribute
-  };
+    properties.is = {
+      configurable,
+      get: getIsAttribute
+    };
 
   // setup the init dispatch only if needed
   // ensure render with an init is triggered after

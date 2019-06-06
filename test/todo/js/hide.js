@@ -1,6 +1,8 @@
-export default class extends HTMLLabelElement {
+export default {
 
-  static style(selector) {
+  extends: 'label',
+
+  style(selector) {
     return `
     ${selector} {
       background-color: white;
@@ -9,16 +11,16 @@ export default class extends HTMLLabelElement {
     ${selector}.flush {
       background-color: lightgreen;
     }`;
-  }
+  },
 
   flush() {
     this.addEventListener('transitionend', this);
     this.classList.add('flush');
-  }
+  },
 
   render() {
     this.html`<input type="checkbox"> hide done`;
-  }
+  },
 
   ontransitionend() {
     this.classList.remove('flush');
