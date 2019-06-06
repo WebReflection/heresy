@@ -1910,6 +1910,13 @@ var heresy = (function (document,exports) {
         tagName: tagName,
         is: is
       };
+      if (!('new' in Class)) defineProperty(Class, 'new', {
+        value: function value() {
+          return document.createElement(tagName, {
+            is: is
+          });
+        }
+      });
       if (style) injectStyle(style.call(Class, "".concat(tagName, "[is=\"").concat(is, "\"]")));
 
       if (init$1) {

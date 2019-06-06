@@ -89,6 +89,11 @@ const get = () => {
     customElements.define(is, Class, {extends: tagName});
     map[name] = {tagName, is};
 
+    if (!('new' in Class))
+      defineProperty(Class, 'new', {
+        value: () => document.createElement(tagName, {is})
+      });
+
     if (style)
       injectStyle(style.call(Class, `${tagName}[is="${is}"]`));
 
