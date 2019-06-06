@@ -1,10 +1,13 @@
+import WeakMap from '@ungap/weakmap';
 import hyphenized from 'hyphenizer';
 import {transform} from 'lighterhtml';
 
-import {augmented, render, html, svg} from './augmented.js';
+import {augmented, render, secret, html, svg} from './augmented.js';
+import {registry, replace, regExp} from './registry.js';
 import extend from './extend.js';
 
 const {
+  create,
   defineProperty,
   defineProperties,
   getOwnPropertyNames,
@@ -14,9 +17,76 @@ const {
 } = Object;
 
 const HTML = {element: HTMLElement};
-const map = {};
-let re = null;
-let init = true;
+const cc = new WeakMap;
+const oc = new WeakMap;
+
+const define = ($, definition) => {
+
+  const {
+    Class,
+    is, name, tagName
+  } = typeof $ === 'string' ?
+        register($, definition, '') :
+        register(definition.name, definition, '');
+
+  setupIncludes(Class);
+
+  registry.map[name] = {tagName, is};
+  registry.re = regExp(keys(registry.map));
+
+  return Class;
+};
+
+const fromClass = constructor => {
+  const Class = extend(constructor, false);
+  augmented(Class.prototype);
+  cc.set(constructor, Class);
+  return Class;
+};
+
+const fromObject = object => {
+  const {statics, prototype, tag} = grabInfo(object);
+  const Class = extend(
+    HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
+    false
+  );
+  augmented(defineProperties(Class.prototype, prototype));
+  oc.set(object, defineProperties(Class, statics));
+  return Class;
+};
+
+const getTag = Class => Class.tagName || Class.extends;
+
+const grabInfo = object => {
+  const statics = create(null);
+  const prototype = create(null);
+  const info = {
+    statics,
+    prototype,
+    tag: getTag(object)
+  };
+  getOwnPropertyNames(object).concat(
+    getOwnPropertySymbols(object)
+  ).forEach(name => {
+    const descriptor = getOwnPropertyDescriptor(object, name);
+    descriptor.enumerable = false;
+    switch (name) {
+      case 'extends':
+        name = 'tagName';
+      case 'contains':
+      case 'includes':
+      case 'name':
+      case 'observedAttributes':
+      case 'style':
+      case 'tagName':
+        statics[name] = descriptor;
+        break;
+      default:
+        prototype[name] = descriptor;
+    }
+  });
+  return info;
+};
 
 const injectStyle = cssText => {
   const style = document.createElement('style');
@@ -29,92 +99,60 @@ const injectStyle = cssText => {
   head.insertBefore(style, head.lastChild);
 };
 
-const fromObject = object => {
-  const tag = getTag(object);
-  const Class = extend(HTML[tag] || (
-    HTML[tag] = document.createElement(tag).constructor
-  ));
-  getOwnPropertyNames(object).concat(
-    getOwnPropertySymbols(object)
-  ).forEach(name => {
-    const descriptor = getOwnPropertyDescriptor(object, name);
-    descriptor.enumerable = false;
-    switch (name) {
-      case 'extends':
-          name = 'tagName';
-      case 'name':
-      case 'observedAttributes':
-      case 'style':
-      case 'tagName':
-        defineProperty(Class, name, descriptor);
-        break;
-      default:
-        defineProperty(Class.prototype, name, descriptor);
-    }
-  });
-  return Class;
-};
-
-const getTag = Class => Class.tagName || Class.extends;
-
-let i = 0;
-const get = () => {
-  const uid = i ? ('-' + i) : '';
-  i++;
-  return ($, Class) => {
-
-    if (typeof $ !== 'string') {
-      Class = $;
-      $ = Class.name;
-    }
-
-    if ($.indexOf(':') < 0)
-      $ += ':' + getTag(Class);
-
-    if (typeof Class === 'object')
-      Class = fromObject(Class);
-
-    if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($))
-      throw `Invalid name or tagName`;
-
-    const {$1: name, $2: tagName} = RegExp;
-    const is = hyphenized(name) + uid + '-heresy';
-
-    if (customElements.get(is))
-      throw `Duplicated ${is} definition`;
-
-    const {prototype, style} = Class;
-    defineProperties(prototype, augmented(prototype));
-    customElements.define(is, Class, {extends: tagName});
-    map[name] = {tagName, is};
-
-    if (!('new' in Class))
-      defineProperty(Class, 'new', {
-        value: () => document.createElement(tagName, {is})
-      });
-
-    if (style)
-      injectStyle(style.call(Class, `${tagName}[is="${is}"]`));
-
-    if (init) {
-      init = false;
-      transform(markup => markup.replace(re, (_, close, name, after) => {
-        const {tagName, is} = map[name];
-        return close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`;
-      }));
-    }
-
-    const heresy = keys(map).join('|');
-    re = new RegExp(`<(/)?(${heresy})([^A-Za-z0-9_])`, 'g');
-
-    return Class;
-  };
-};
-
-const define = defineProperties(get(), {local: {get}});
 const ref = (self, name) => self ?
   (self[name] || (self[name] = {current: null})) :
   {current: null};
+
+const register = ($, definition, uid) => {
+
+  if ($.indexOf(':') < 0)
+    $ += ':' + getTag(definition);
+
+  if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($))
+    throw `Invalid name or tagName`;
+
+  const {$1: name, $2: tagName} = RegExp;
+  const is = hyphenized(name) + uid + '-heresy';
+
+  if (customElements.get(is))
+    throw `Duplicated ${is} definition`;
+
+  const Class = extend(
+    typeof definition === 'object' ?
+      (oc.get(definition) || fromObject(definition)) :
+      (cc.get(definition) || fromClass(definition)),
+    true
+  );
+
+  customElements.define(is, Class, {extends: tagName});
+
+  defineProperty(Class, 'new', {
+    value: () => document.createElement(tagName, {is})
+  });
+
+  if ('style' in Class)
+    injectStyle(Class.style(`${tagName}[is="${is}"]`));
+
+  return {Class, is, name, tagName};
+};
+
+let index = 0;
+const setupIncludes = (Class) => {
+  const includes = Class.includes || Class.contains;
+  if (includes) {
+    const uid = '-' + ++index;
+    const map = {};
+    keys(includes).forEach($ => {
+      const {Class, is, name, tagName} = register($, includes[$], uid);
+      map[name] = {tagName, is};
+      setupIncludes(Class);
+    });
+    const re = regExp(keys(map));
+    defineProperty(Class, secret, {value: {map, re}});
+  }
+};
+
+transform(markup => replace(markup, registry));
 
 export {
   define, ref,
