@@ -4,7 +4,7 @@
 
 [![donate](https://img.shields.io/badge/$-donate-ff69b4.svg?maxAge=2592000&style=flat)](https://github.com/WebReflection/donate) ![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
 
-React like Custom Elements via V1 API builtin extends.
+React-like Custom Elements via V1 API builtin extends.
 
 The following example is [live in Code Pen](https://codepen.io/WebReflection/pen/WWPWdR?editors=0010).
 
