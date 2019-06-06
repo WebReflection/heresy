@@ -1,4 +1,4 @@
-# heresy
+# 🔥 heresy 🔥
 
 <sup>**Social Media Photo by [Robert Lukeman](https://unsplash.com/@robertlukeman) on [Unsplash](https://unsplash.com/)**</sup>
 
