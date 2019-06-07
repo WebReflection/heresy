@@ -11,7 +11,7 @@ const {
   svg: lighterSVG
 } = require('lighterhtml');
 
-const {replace} = require('./utils.js');
+const {replace, setInfo} = require('./utils.js');
 
 const secret = '_\uD83D\uDD25';
 
@@ -46,7 +46,27 @@ const addInit = (prototype, properties, method) => {
     };
 };
 
+const augmentedRender = prototype => {
+  const {render} = prototype;
+  prototype.render = function () {
+    const info = this.constructor[secret];
+    return (
+      prototype.render = info ?
+        function () {
+          setInfo(info);
+          const out = render.apply(this, arguments);
+          setInfo(null);
+          return out;
+        } :
+        render
+    ).apply(this, arguments);
+  };
+};
+
 const augmented = (prototype, is) => {
+
+  if ('render' in prototype)
+    augmentedRender(prototype);
 
   const __heresy__ = [];
   const properties = {

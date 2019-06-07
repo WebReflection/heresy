@@ -1673,9 +1673,13 @@ var heresy = (function (document,exports) {
     return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9_])"), 'g');
   };
 
+  var tmp = null;
+
   var replace = function replace(markup, info) {
-    var map = info.map,
-        re = info.re;
+    var _ref = tmp || info,
+        map = _ref.map,
+        re = _ref.re;
+
     return markup.replace(re, function (_, close, name, after) {
       var _map$name = map[name],
           tagName = _map$name.tagName,
@@ -1685,11 +1689,15 @@ var heresy = (function (document,exports) {
     });
   };
 
-  var selector = function selector(_ref) {
-    var tagName = _ref.tagName,
-        is = _ref.is,
-        element = _ref.element;
+  var selector = function selector(_ref2) {
+    var tagName = _ref2.tagName,
+        is = _ref2.is,
+        element = _ref2.element;
     return element ? is : "".concat(tagName, "[is=\"").concat(is, "\"]");
+  };
+
+  var setInfo = function setInfo(info) {
+    tmp = info;
   };
 
   var secret = "_\uD83D\uDD25";
@@ -1719,7 +1727,22 @@ var heresy = (function (document,exports) {
     };
   };
 
+  var augmentedRender = function augmentedRender(prototype) {
+    var render = prototype.render;
+
+    prototype.render = function () {
+      var info = this.constructor[secret];
+      return (prototype.render = info ? function () {
+        setInfo(info);
+        var out = render.apply(this, arguments);
+        setInfo(null);
+        return out;
+      } : render).apply(this, arguments);
+    };
+  };
+
   var augmented = function augmented(prototype, is) {
+    if ('render' in prototype) augmentedRender(prototype);
     var __heresy__ = [];
     var properties = {
       is: {
