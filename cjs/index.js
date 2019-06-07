@@ -4,7 +4,7 @@ const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /
 const {transform} = require('lighterhtml');
 
 const {augmented, render, secret, html, svg} = require('./augmented.js');
-const {registry, replace, regExp} = require('./registry.js');
+const {registry, replace, regExp} = require('./utils.js');
 const extend = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('./extend.js'));
 
 const {
@@ -120,8 +120,8 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition)) :
-      (cc.get(definition) || fromClass(definition)),
+      (oc.get(definition) || fromObject(definition, is)) :
+      (cc.get(definition) || fromClass(definition, is)),
     true
   );
 
@@ -130,6 +130,8 @@ const register = ($, definition, uid) => {
   defineProperty(Class, 'new', {
     value: () => document.createElement(tagName, {is})
   });
+
+  defineProperty(Class.prototype, 'is', {value: is});
 
   if ('style' in Class)
     injectStyle(Class.style(`${tagName}[is="${is}"]`));

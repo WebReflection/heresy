@@ -3,7 +3,7 @@ import hyphenized from 'hyphenizer';
 import {transform} from 'lighterhtml';
 
 import {augmented, render, secret, html, svg} from './augmented.js';
-import {registry, replace, regExp} from './registry.js';
+import {registry, replace, regExp} from './utils.js';
 import extend from './extend.js';
 
 const {
@@ -119,8 +119,8 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition)) :
-      (cc.get(definition) || fromClass(definition)),
+      (oc.get(definition) || fromObject(definition, is)) :
+      (cc.get(definition) || fromClass(definition, is)),
     true
   );
 
@@ -129,6 +129,8 @@ const register = ($, definition, uid) => {
   defineProperty(Class, 'new', {
     value: () => document.createElement(tagName, {is})
   });
+
+  defineProperty(Class.prototype, 'is', {value: is});
 
   if ('style' in Class)
     injectStyle(Class.style(`${tagName}[is="${is}"]`));

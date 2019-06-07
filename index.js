@@ -1668,9 +1668,11 @@ var heresy = (function (document,exports) {
     map: {},
     re: null
   };
+
   var regExp = function regExp(keys) {
     return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9_])"), 'g');
   };
+
   var replace = function replace(markup, info) {
     var map = info.map,
         re = info.re;
@@ -1682,9 +1684,8 @@ var heresy = (function (document,exports) {
     });
   };
 
-  var secret = '__heresy__';
-  var defineProperties = Object.defineProperties,
-      freeze = Object.freeze;
+  var secret = "_\uD83D\uDD25";
+  var defineProperties = Object.defineProperties;
   var $html = new WeakMap$1();
   var $svg = new WeakMap$1();
   var $template = new WeakMap$1();
@@ -1728,10 +1729,6 @@ var heresy = (function (document,exports) {
     if (!('handleEvent' in prototype)) properties.handleEvent = {
       configurable: configurable,
       value: handleEvent
-    };
-    if (!('is' in prototype)) properties.is = {
-      configurable: configurable,
-      get: getIsAttribute
     }; // setup the init dispatch only if needed
     // ensure render with an init is triggered after
 
@@ -1799,18 +1796,9 @@ var heresy = (function (document,exports) {
   };
 
   var setParsed = function setParsed(template, info) {
-    if (info) {
-      var value = replace(template.join(secret), info).split(secret);
-      $template.set(template, value);
-      defineProperties(value, {
-        raw: {
-          value: value
-        }
-      });
-      return freeze(value);
-    }
-
-    return template;
+    var value = info ? replace(template.join(secret), info).split(secret) : template;
+    $template.set(template, value);
+    return value;
   };
 
   var setWrap = function setWrap(self, type, wm) {
@@ -1843,10 +1831,6 @@ var heresy = (function (document,exports) {
 
   function getSVG() {
     return $svg.get(this) || setWrap(this, svg$1, $svg);
-  }
-
-  function getIsAttribute() {
-    return this.getAttribute('is');
   }
 
   function handleEvent(event) {
@@ -2024,7 +2008,7 @@ var heresy = (function (document,exports) {
         tagName = RegExp.$2;
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition) : cc.get(definition) || fromClass(definition), true);
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, is) : cc.get(definition) || fromClass(definition, is), true);
     customElements.define(is, Class, {
       "extends": tagName
     });
@@ -2034,6 +2018,9 @@ var heresy = (function (document,exports) {
           is: is
         });
       }
+    });
+    defineProperty(Class.prototype, 'is', {
+      value: is
     });
     if ('style' in Class) injectStyle(Class.style("".concat(tagName, "[is=\"").concat(is, "\"]")));
     return {

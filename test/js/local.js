@@ -14,5 +14,4 @@ const Div = define('Div', {
 // either
 render(document.body, html`<Div/>`);
 
-// or
-// document.body.appendChild(Div.new());
+// or document.body.appendChild(Div.new());

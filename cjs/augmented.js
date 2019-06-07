@@ -11,12 +11,11 @@ const {
   svg: lighterSVG
 } = require('lighterhtml');
 
-const {replace} = require('./registry.js');
+const {replace} = require('./utils.js');
 
-const secret = '__heresy__';
-exports.secret = secret;
+const secret = '_\uD83D\uDD25';
 
-const {defineProperties, freeze} = Object;
+const {defineProperties} = Object;
 
 const $html = new WeakMap;
 const $svg = new WeakMap;
@@ -67,12 +66,6 @@ const augmented = prototype => {
     properties.handleEvent = {
       configurable,
       value: handleEvent
-    };
-
-  if (!('is' in prototype))
-    properties.is = {
-      configurable,
-      get: getIsAttribute
     };
 
   // setup the init dispatch only if needed
@@ -142,13 +135,13 @@ const render = (where, what) => lighterRender(
 );
 
 const setParsed = (template, info) => {
-  if (info) {
-    const value = replace(template.join(secret), info).split(secret);
-    $template.set(template, value);
-    defineProperties(value, {raw: {value}});
-    return freeze(value);
-  }
-  return template;
+  const value = (
+    info ?
+      replace(template.join(secret), info).split(secret) :
+      template
+  );
+  $template.set(template, value);
+  return value;
 };
 
 const setWrap = (self, type, wm) => {
@@ -164,6 +157,7 @@ const wrap = (self, type) => (tpl, ...values) => {
   return lighterRender(self, () => type(local, ...values));
 };
 
+exports.secret = secret;
 exports.augmented = augmented;
 exports.render = render;
 exports.html = html;
@@ -179,10 +173,6 @@ function getHTML() {
 
 function getSVG() {
   return $svg.get(this) || setWrap(this, svg, $svg);
-}
-
-function getIsAttribute() {
-  return this.getAttribute('is');
 }
 
 function handleEvent(event) {
