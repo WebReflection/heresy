@@ -431,6 +431,10 @@ tag[is^='my-button-'] {
 
 - - -
 
+## Project Showcases
+
+  * the classic [TodoMVC](https://github.com/WebReflection/heresy-todo)
+
 ## Project Achievements
 
   * declared elements are the instance you'd expect (no virtual, no facade)
