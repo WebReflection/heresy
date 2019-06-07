@@ -20,7 +20,7 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
   * locally scoped custom elements to both avoid name clashing and have components reusable in any context, similarly to what you can do with any React component
   * automatic components name definition passed through optional `Component.style(selector)` to inject, only once per definition, related styles
   * automatic [handleEvent](https://medium.com/@WebReflection/dom-handleevent-a-cross-platform-standard-since-year-2000-5bf17287fd38) patter to forget once for all about `this.method = this.method.bind(this)` unnecessary pattern
-  * out of the box, event drive, life cycle events, such as `oninit(event)`, `onconnected(event)`, `ondisconnected(event)`, or `onattributechangedcallback(event)`, so you can skip ugly `attributeChangedCallback` and other not intuitive callbacks right away (but use them if you like)
+  * out of the box life cycle events, such as `oninit(event)`, `onconnected(event)`, `ondisconnected(event)`, or `onattributechangedcallback(event)`, so you can skip ugly `attributeChangedCallback` and other not intuitive callbacks right away (but use them if you like)
   * automatic smart components initializer via `Component.new()` to avoid all quirks related to custom elements, and built-ins, initialization
   * an always available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
   * automatic, lazy, `this.html` and `this.svg` template literal tags, to populate a component content within its optionally local scoped defined elements
