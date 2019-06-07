@@ -1718,7 +1718,7 @@ var heresy = (function (document,exports) {
         configurable: configurable,
         value: function value() {
           init.call(this);
-          return original.call(this);
+          return original.apply(this, arguments);
         }
       };
     } else properties[method] = {

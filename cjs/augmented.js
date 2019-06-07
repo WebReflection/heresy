@@ -35,7 +35,7 @@ const addInit = (prototype, properties, method) => {
       configurable,
       value() {
         init.call(this);
-        return original.call(this);
+        return original.apply(this, arguments);
       }
     };
   }
