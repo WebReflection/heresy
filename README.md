@@ -14,7 +14,7 @@ This project is some sort of protest against these major trends:
   * believing custom elements are not cool enough to compete with such Frameworks
   * believing custom elements built-in extend are unnecessary or not useful at all
 
-Borrowing concepts and patterns from various libraries, _heresy_ enables custom elements patterns never achieved before, including:
+Borrowing concepts and patterns from various libraries, _heresy_ enables custom elements through patterns never seen before:
 
   * declarative UI (i.e. `<Component class=${...}><Section data=${{...}}/></Component>`) without needing JSX transformations or tooling at all
   * locally scoped custom elements to both avoid name clashing and have components reusable in any context, similarly to what you can do with any React component
