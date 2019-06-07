@@ -48,18 +48,22 @@ const addInit = (prototype, properties, method) => {
 
 const augmentedRender = prototype => {
   const {render} = prototype;
+  let patched = render;
+  let init = true;
   prototype.render = function () {
-    const info = this.constructor[secret];
-    return (
-      prototype.render = info ?
-        function () {
+    if (init) {
+      init = false;
+      const info = this.constructor[secret];
+      if (info) {
+        patched = function () {
           setInfo(info);
           const out = render.apply(this, arguments);
           setInfo(null);
           return out;
-        } :
-        render
-    ).apply(this, arguments);
+        };
+      }
+    }
+    return patched.apply(this, arguments);
   };
 };
 

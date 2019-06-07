@@ -1729,15 +1729,25 @@ var heresy = (function (document,exports) {
 
   var augmentedRender = function augmentedRender(prototype) {
     var render = prototype.render;
+    var patched = render;
+    var init = true;
 
     prototype.render = function () {
-      var info = this.constructor[secret];
-      return (prototype.render = info ? function () {
-        setInfo(info);
-        var out = render.apply(this, arguments);
-        setInfo(null);
-        return out;
-      } : render).apply(this, arguments);
+      if (init) {
+        init = false;
+        var info = this.constructor[secret];
+
+        if (info) {
+          patched = function patched() {
+            setInfo(info);
+            var out = render.apply(this, arguments);
+            setInfo(null);
+            return out;
+          };
+        }
+      }
+
+      return patched.apply(this, arguments);
     };
   };
 
