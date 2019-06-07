@@ -45,10 +45,11 @@ const addInit = (prototype, properties, method) => {
     };
 };
 
-const augmented = prototype => {
+const augmented = (prototype, is) => {
 
   const __heresy__ = [];
   const properties = {
+    is: {value: is},
     html: {
       configurable,
       get: getHTML

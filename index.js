@@ -1719,9 +1719,12 @@ var heresy = (function (document,exports) {
     };
   };
 
-  var augmented = function augmented(prototype) {
+  var augmented = function augmented(prototype, is) {
     var __heresy__ = [];
     var properties = {
+      is: {
+        value: is
+      },
       html: {
         configurable: configurable,
         get: getHTML
@@ -1946,21 +1949,21 @@ var heresy = (function (document,exports) {
     return Class;
   };
 
-  var fromClass = function fromClass(constructor) {
+  var fromClass = function fromClass(constructor, is) {
     var Class = extend(constructor, false);
-    augmented(Class.prototype);
+    augmented(Class.prototype, is);
     cc.set(constructor, Class);
     return Class;
   };
 
-  var fromObject = function fromObject(object) {
+  var fromObject = function fromObject(object, is) {
     var _grabInfo = grabInfo(object),
         statics = _grabInfo.statics,
         prototype = _grabInfo.prototype,
         tag = _grabInfo.tag;
 
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
-    augmented(defineProperties$1(Class.prototype, prototype));
+    augmented(defineProperties$1(Class.prototype, prototype), is);
     oc.set(object, defineProperties$1(Class, statics));
     return Class;
   };
@@ -2041,9 +2044,6 @@ var heresy = (function (document,exports) {
           is: is
         });
       }
-    });
-    if (!element) defineProperty(Class.prototype, 'is', {
-      value: is
     });
     return {
       Class: Class,

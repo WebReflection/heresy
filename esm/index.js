@@ -37,20 +37,20 @@ const define = ($, definition) => {
   return Class;
 };
 
-const fromClass = constructor => {
+const fromClass = (constructor, is) => {
   const Class = extend(constructor, false);
-  augmented(Class.prototype);
+  augmented(Class.prototype, is);
   cc.set(constructor, Class);
   return Class;
 };
 
-const fromObject = object => {
+const fromObject = (object, is) => {
   const {statics, prototype, tag} = grabInfo(object);
   const Class = extend(
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
   );
-  augmented(defineProperties(Class.prototype, prototype));
+  augmented(defineProperties(Class.prototype, prototype), is);
   oc.set(object, defineProperties(Class, statics));
   return Class;
 };
@@ -135,9 +135,6 @@ const register = ($, definition, uid) => {
                   document.createElement(is) :
                   document.createElement(tagName, {is})
   });
-
-  if (!element)
-    defineProperty(Class.prototype, 'is', {value: is});
 
   return {Class, is, name, tagName};
 };
