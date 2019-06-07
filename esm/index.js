@@ -124,13 +124,20 @@ const register = ($, definition, uid) => {
     true
   );
 
-  customElements.define(is, Class, {extends: tagName});
+  const args = [is, Class];
+  const element = tagName === 'element';
+  if (!element)
+    args.push({extends: tagName});
+  customElements.define(...args);
 
   defineProperty(Class, 'new', {
-    value: () => document.createElement(tagName, {is})
+    value: () => element ?
+                  document.createElement(is) :
+                  document.createElement(tagName, {is})
   });
 
-  defineProperty(Class.prototype, 'is', {value: is});
+  if (!element)
+    defineProperty(Class.prototype, 'is', {value: is});
 
   if ('style' in Class)
     injectStyle(Class.style(`${tagName}[is="${is}"]`));

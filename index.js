@@ -1680,7 +1680,7 @@ var heresy = (function (document,exports) {
       var _map$name = map[name],
           tagName = _map$name.tagName,
           is = _map$name.is;
-      return close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+      return tagName === 'element' ? close ? "</".concat(is, ">") : "<".concat(is).concat(after) : close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
     });
   };
 
@@ -2002,6 +2002,8 @@ var heresy = (function (document,exports) {
   };
 
   var register = function register($, definition, uid) {
+    var _customElements;
+
     if ($.indexOf(':') < 0) $ += ':' + getTag(definition);
     if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Invalid name or tagName";
     var name = RegExp.$1,
@@ -2009,17 +2011,22 @@ var heresy = (function (document,exports) {
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
     var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, is) : cc.get(definition) || fromClass(definition, is), true);
-    customElements.define(is, Class, {
+    var args = [is, Class];
+    var element = tagName === 'element';
+    if (!element) args.push({
       "extends": tagName
     });
+
+    (_customElements = customElements).define.apply(_customElements, args);
+
     defineProperty(Class, 'new', {
       value: function value() {
-        return document.createElement(tagName, {
+        return element ? document.createElement(is) : document.createElement(tagName, {
           is: is
         });
       }
     });
-    defineProperty(Class.prototype, 'is', {
+    if (!element) defineProperty(Class.prototype, 'is', {
       value: is
     });
     if ('style' in Class) injectStyle(Class.style("".concat(tagName, "[is=\"").concat(is, "\"]")));

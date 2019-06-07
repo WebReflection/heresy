@@ -12,7 +12,9 @@ const replace = (markup, info) => {
   const {map, re} = info;
   return markup.replace(re, (_, close, name, after) => {
     const {tagName, is} = map[name];
-    return close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`;
+    return tagName === 'element' ?
+      (close ? `</${is}>` : `<${is}${after}`) :
+      (close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`);
   });
 }
 

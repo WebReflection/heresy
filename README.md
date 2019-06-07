@@ -2,11 +2,151 @@
 
 <sup>**Social Media Photo by [Robert Lukeman](https://unsplash.com/@robertlukeman) on [Unsplash](https://unsplash.com/)**</sup>
 
-[![donate](https://img.shields.io/badge/$-donate-ff69b4.svg?maxAge=2592000&style=flat)](https://github.com/WebReflection/donate) ![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
+![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
 
 React-like Custom Elements via V1 API builtin extends.
 
-The following example is [live in Code Pen](https://codepen.io/WebReflection/pen/WWPWdR?editors=0010).
+## What is this _heresy_ ?
+
+This project is some sort of protest against these major trends:
+
+  * believing you cannot have tiny APIs able to compete with most famous Frameworks
+  * believing custom elements are not cool enough to compete with such Frameworks
+  * believing custom elements built-in extend are unnecessary or not useful at all
+
+Borrowing concepts and patterns from various libraries, _heresy_ enables custom elements patterns never achieved before, including:
+
+  * declarative UI (i.e. `<Component class=${...}><Section data=${{...}}/></Component>`) without needing JSX transformations or tooling at all
+  * locally scoped custom elements to both avoid name clashing and have components reusable in any context, similarly to what you can do with any React component
+  * automatic components name definition passed through optional `Component.style(selector)` to inject, only once per definition, related styles
+  * automatic [handleEvent](https://medium.com/@WebReflection/dom-handleevent-a-cross-platform-standard-since-year-2000-5bf17287fd38) patter to forget once for all about `this.method = this.method.bind(this)` unnecessary pattern
+  * out of the box, event drive, life cycle events, such as `oninit(event)`, `onconnected(event)`, `ondisconnected(event)`, or `onattributechangedcallback(event)`, so you can skip ugly `attributeChangedCallback` and other not intuitive callbacks right away (but use them if you like)
+  * automatic smart components initializer via `Component.new()` to avoid all quirks related to custom elements, and built-ins, initialization
+  * an always available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
+  * automatic, lazy, `this.html` and `this.svg` template literal tags, to populate a component content within its optionally local scoped defined elements
+  * provide simplifications in targeting rendered nodes through React-like `ref()` utility
+
+### Usage in a nutshell
+
+A component could be defined through both classes or raw objects literals.
+
+```js
+// <Item props=${{name}} />
+
+// as object literal
+const literal = {
+  name: 'Item',
+  extends: 'li',  // will extends li constructor
+  render() {
+    this.html`my name is ${this.props.name}`;
+  }
+};
+
+// as class
+class Item extends HTMLLiElement {
+  static name = 'Item';   // necessary if code gets transpiled
+  static tagName = 'li';  // necessary to indicate the kind
+  render() {
+    this.html`my name is ${this.props.name}`;
+  }
+}
+```
+
+While both name and the tag it represents can be defined within the class or object, it's rather suggested to pre define at least the tag it's going to represent, but not the name.
+
+```js
+const literal = {
+  extends: 'li',
+  render() { this.html`my name is ${this.props.name}`; }
+};
+
+// in this way it's possible to define the name only via
+define('Item', literal);
+```
+
+Alternatively, it is possible to not include name and tag, defining these via `Comp:tag` convention.
+
+```js
+class Item extends HTMLLiElement {
+  render() { this.html`my name is ${this.props.name}`; }
+}
+
+define('MyItem:li', literal);
+```
+
+#### Which tag ?
+
+The beauty and power of custom elements built-in extends is that you can literally represent any tag you want/need.
+
+However, if you'd like to simply extend a non standard tag, you can always fallback to the `element` tag kind, which will extend `HTMLElement`, and represent the component through its retrieved `<hyphen-ized-heresy>` name.
+
+```js
+// either as object
+const Component = {
+  extends: 'element',
+  onconnected() { console.log(this.outerHTML); }
+};
+
+// or as class
+class Component extends HTMLElement {
+  static get tagName() { return 'element'; }
+  onconnected() { console.log(this.outerHTML); }
+};
+
+const MyElement = heresy.define('MyElement', Component);
+document.body.appendChild(MyElement.new());
+// in console: <my-element-heresy></my-element-heresy>
+```
+
+### Local components in a nutshell
+
+While `define(...)` will use the global registry to define the specific declarative name, so that it's still a good practice to somehow namespace it (i.e. `FWDatePicker`, `StencilForm`, ...etc), it is possible to define local components through the usage of `includes`, also aliased as `contains`.
+
+Such list will still pass through the registry, so that local components are still fully valid custom elements, but these won't ever possibly name-clash with anything else, so that it's easier to split complex components in various sub-modules, and define globally only their main container.
+
+```js
+import {define, ref, render, html} from 'heresy';
+
+import {User, Pass} from './form/ui.js';
+import {validate, switchPage} from './form/utils.js';
+
+const Form = {
+  extends: 'form',
+  includes: {User, Pass},
+  oninit() {
+    // refs can be declared upfront or inline (see render)
+    this.user = ref();
+    this.addEventListener('submit', this);
+  },
+  onsubmit(event) {
+    event.preventDefault();
+    if (validate(this.user.current, this.pass.current))
+      fetch('/log-in').then(switchPage).catch(console.error);
+  },
+  // render is invoked automatically on connected
+  // if no connected, or callback is explicitly defined
+  render() {
+    this.html`
+    <label>Your name: <User ref=${this.user} name="user"></label>
+    <label>Your pass: <Pass ref=${ref(this, 'pass')} name="pass"></label>
+    `;
+  }
+};
+
+define('SiteLogin', Form);
+render(document.body, html`<SiteLogin/>`);
+```
+
+The `includes` or `contains` property, if present, must be a map of `"Name": Component` pairs, where the name could also define the tag type, like it is for `define(...)`.
+
+In the previous example, both `User` and `Pass` are components extending `input` so that the name is not necessary, but `{"User:button": User}` would be eventually valid as local component.
+
+The main difference with local components is that their registry name gets polluted with a unique identifier, so that instea of `<input is="user-heresy">`, the outcome would be instead `<input is="user-123-heresy">`, and the number is associated uniquely per component, where a component can be defined, or used, differently with many other components so that name clashing won't ever be possible.
+
+
+### Class and object API summary
+
+A similar example is [live in Code Pen](https://codepen.io/WebReflection/pen/WWPWdR?editors=0010).
 
 ```js
 import {define, html, render} from 'heresy';
@@ -176,7 +316,7 @@ This project brings local components definition avoiding the following issues:
   * single class/object to define multiple components, just import the same class/object and `includes` it with in the component
   * components in isolation don't even need to have DOM around
 
-#### Local components example
+#### Local components live example
 
 You can see the [following example live](https://webreflection.github.io/heresy/test/local.html).
 ```js
@@ -228,19 +368,6 @@ render(document.body, html`<Div/>`);
 
 ```
 
-## Overall Goals
-
-  * declared elements are the instance you'd expect (no virtual, no facade)
-  * declared elements can be of any kind (table, tr, select, option, ...)
-  * declare any component within other components breaking the limits of a single, name-clashing based, registry
-  * any attribute change, or node lifecycle, can be tracked via Custom Elements V1 API (no componentDidMount and friends)
-  * `oninit`, `onconnected`, `ondisconnected`, and `onattributechanged` events out of the box
-  * `handleEvent` paradigm out of the box
-  * no redundant dom nodes, no ghost fragments, a clean as possible output
-  * the lighterhtml performance, fine tuned for this specific use case
-  * it's SSR (Server Side Rendering) friendly, and custom elements hydrate automatically
-
-
 ## CSS - How to query or style globally defined components
 
 Every global builtin extend will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
@@ -268,3 +395,17 @@ tag[is^='my-button-'] {
   display: block;
 }
 ```
+
+- - -
+
+## Project Achievements
+
+  * declared elements are the instance you'd expect (no virtual, no facade)
+  * declared elements can be of any kind (table, tr, select, option, ...)
+  * declare any component within other components breaking the limits of a single, name-clashing based, registry
+  * any attribute change, or node lifecycle, can be tracked via Custom Elements V1 API (no componentDidMount and friends)
+  * `oninit`, `onconnected`, `ondisconnected`, and `onattributechanged` events out of the box
+  * `handleEvent` paradigm out of the box
+  * no redundant dom nodes, no ghost fragments, a clean as possible output
+  * the lighterhtml performance, fine tuned for this specific use case
+  * it's SSR (Server Side Rendering) friendly, and custom elements hydrate automatically
