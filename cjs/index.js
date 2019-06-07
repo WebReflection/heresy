@@ -28,7 +28,7 @@ const define = ($, definition) => {
     is, name, tagName
   } = typeof $ === 'string' ?
         register($, definition, '') :
-        register(definition.name, definition, '');
+        register($.name, $, '');
 
   setupIncludes(Class);
 

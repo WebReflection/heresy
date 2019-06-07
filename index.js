@@ -1915,7 +1915,7 @@ var heresy = (function (document,exports) {
   var oc = new WeakMap$1();
 
   var define = function define($, definition) {
-    var _ref = typeof $ === 'string' ? register($, definition, '') : register(definition.name, definition, ''),
+    var _ref = typeof $ === 'string' ? register($, definition, '') : register($.name, $, ''),
         Class = _ref.Class,
         is = _ref.is,
         name = _ref.name,
