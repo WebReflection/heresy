@@ -1697,11 +1697,11 @@ var heresy = (function (document,exports) {
   var $html = new WeakMap$1();
   var $svg = new WeakMap$1();
   var $template = new WeakMap$1();
+  var ws = new WeakSet$1();
   var configurable = true;
   var attributeChangedCallback = 'attributeChangedCallback';
   var connectedCallback = 'connectedCallback';
   var disconnectedCallback = "dis".concat(connectedCallback);
-  var ws = new WeakSet$1();
 
   var addInit = function addInit(prototype, properties, method) {
     if (method in prototype) {
@@ -1777,6 +1777,10 @@ var heresy = (function (document,exports) {
     defineProperties(prototype, properties);
   };
 
+  var evt = function evt(type) {
+    return new Event$1(type);
+  };
+
   var html$1 = function html() {
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
@@ -1849,12 +1853,12 @@ var heresy = (function (document,exports) {
     if (!ws.has(this)) {
       ws.add(this);
       this[secret].forEach(addListener, this);
-      this.dispatchEvent(new Event$1('init'));
+      this.dispatchEvent(evt('init'));
     }
   }
 
   function onattributechanged(attributeName, oldValue, newValue) {
-    var event = new Event$1('attributechanged');
+    var event = evt('attributechanged');
     event.attributeName = attributeName;
     event.oldValue = oldValue;
     event.newValue = newValue;
@@ -1862,7 +1866,7 @@ var heresy = (function (document,exports) {
   }
 
   function onconnected() {
-    this.dispatchEvent(new Event$1('connected'));
+    this.dispatchEvent(evt('connected'));
   }
 
   function onconnectedrender() {
@@ -1870,7 +1874,7 @@ var heresy = (function (document,exports) {
   }
 
   function ondisconnected() {
-    this.dispatchEvent(new Event$1('disconnected'));
+    this.dispatchEvent(evt('disconnected'));
   }
 
   var construct = Reflect.construct,

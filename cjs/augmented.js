@@ -20,13 +20,13 @@ const {defineProperties} = Object;
 const $html = new WeakMap;
 const $svg = new WeakMap;
 const $template = new WeakMap;
+const ws = new WeakSet;
+
 const configurable = true;
 
 const attributeChangedCallback = 'attributeChangedCallback';
 const connectedCallback = 'connectedCallback';
 const disconnectedCallback = `dis${connectedCallback}`;
-
-const ws = new WeakSet;
 
 const addInit = (prototype, properties, method) => {
   if (method in prototype) {
@@ -123,6 +123,8 @@ const augmented = prototype => {
   defineProperties(prototype, properties);
 };
 
+const evt = type => new Event(type);
+
 const html = (...args) => new Hole('html', args);
 html.for = lighterHTML.for;
 
@@ -183,12 +185,12 @@ function init() {
   if (!ws.has(this)) {
     ws.add(this);
     this[secret].forEach(addListener, this);
-    this.dispatchEvent(new Event('init'));
+    this.dispatchEvent(evt('init'));
   }
 }
 
 function onattributechanged(attributeName, oldValue, newValue) {
-  const event = new Event('attributechanged');
+  const event = evt('attributechanged');
   event.attributeName = attributeName;
   event.oldValue = oldValue;
   event.newValue = newValue;
@@ -196,7 +198,7 @@ function onattributechanged(attributeName, oldValue, newValue) {
 }
 
 function onconnected() {
-  this.dispatchEvent(new Event('connected'));
+  this.dispatchEvent(evt('connected'));
 }
 
 function onconnectedrender() {
@@ -204,5 +206,5 @@ function onconnectedrender() {
 }
 
 function ondisconnected() {
-  this.dispatchEvent(new Event('disconnected'));
+  this.dispatchEvent(evt('disconnected'));
 }
