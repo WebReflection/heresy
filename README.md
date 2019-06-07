@@ -108,6 +108,8 @@ While `define(...)` will use the global registry to define the specific declarat
 
 Such list will still pass through the registry, so that local components are still fully valid custom elements, but these won't ever possibly name-clash with anything else, so that it's easier to split complex components in various sub-modules, and define globally only their main container.
 
+The following example has been rewritten with extra details and is [live on codepen](https://codepen.io/WebReflection/pen/argjeV?editors=0010).
+
 ```js
 import {define, ref, render, html} from 'heresy';
 
