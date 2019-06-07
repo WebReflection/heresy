@@ -244,6 +244,7 @@ The following list describes the _heresy_'s compatibility break down:
   * IE9 and IE10 *might* need an `Object.freeze` patch, to avoid breaking on frozen template literals when passed to polyfilled WeakMaps. The patch checks for the existence of `WeakMap`, hence it's completely safe for any modern browser, including IE11.
   * old Edge and all IE might need a Custom Elements polyfill upfront. In this case the famous [document-register-element](https://github.com/WebReflection/document-register-element) would be the suggested choice, since it patches built in right away too.
   * Safari and WebKit have an understandable but pretty stubborn position regarding built-in elements, so that a 1K [polyfill](https://github.com/ungap/custom-elements-builtin) is needed, in case you target Safari and WebKit too.
+  * you don't need Safari polyfill if you only extend `element`, but you'll miss out 90% of fun with programming through built-in extends
 
 
 ### Broader compatibility in a nutshell
