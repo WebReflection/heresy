@@ -4,7 +4,7 @@ const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /
 const {transform} = require('lighterhtml');
 
 const {augmented, render, secret, html, svg} = require('./augmented.js');
-const {registry, replace, regExp} = require('./utils.js');
+const {registry, replace, regExp, selector} = require('./utils.js');
 const extend = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('./extend.js'));
 
 const {
@@ -21,6 +21,8 @@ const HTML = {element: HTMLElement};
 const cc = new WeakMap;
 const oc = new WeakMap;
 
+const info = (tagName, is) => ({tagName, is, element: tagName === 'element'});
+
 const define = ($, definition) => {
 
   const {
@@ -30,9 +32,7 @@ const define = ($, definition) => {
         register($, definition, '') :
         register($.name, $, '');
 
-  setupIncludes(Class);
-
-  registry.map[name] = {tagName, is};
+  registry.map[name] = setupIncludes(Class, tagName, is);
   registry.re = regExp(keys(registry.map));
 
   return Class;
@@ -140,26 +140,27 @@ const register = ($, definition, uid) => {
   if (!element)
     defineProperty(Class.prototype, 'is', {value: is});
 
-  if ('style' in Class)
-    injectStyle(Class.style(`${tagName}[is="${is}"]`));
-
   return {Class, is, name, tagName};
 };
 
 let index = 0;
-const setupIncludes = (Class) => {
+const setupIncludes = (Class, tagName, is) => {
+  const details = info(tagName, is);
+  const styles = [selector(details)];
   const includes = Class.includes || Class.contains;
   if (includes) {
     const uid = '-' + ++index;
     const map = {};
     keys(includes).forEach($ => {
       const {Class, is, name, tagName} = register($, includes[$], uid);
-      map[name] = {tagName, is};
-      setupIncludes(Class);
+      styles.push(selector(map[name] = setupIncludes(Class, tagName, is)));
     });
     const re = regExp(keys(map));
     defineProperty(Class, secret, {value: {map, re}});
   }
+  if ('style' in Class)
+    injectStyle(Class.style(...styles));
+  return details;
 };
 
 transform(markup => replace(markup, registry));

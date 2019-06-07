@@ -1679,9 +1679,17 @@ var heresy = (function (document,exports) {
     return markup.replace(re, function (_, close, name, after) {
       var _map$name = map[name],
           tagName = _map$name.tagName,
-          is = _map$name.is;
-      return tagName === 'element' ? close ? "</".concat(is, ">") : "<".concat(is).concat(after) : close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
+          is = _map$name.is,
+          element = _map$name.element;
+      return element ? close ? "</".concat(is, ">") : "<".concat(is).concat(after) : close ? "</".concat(tagName, ">") : "<".concat(tagName, " is=\"").concat(is, "\"").concat(after);
     });
+  };
+
+  var selector = function selector(_ref) {
+    var tagName = _ref.tagName,
+        is = _ref.is,
+        element = _ref.element;
+    return element ? is : "".concat(tagName, "[is=\"").concat(is, "\"]");
   };
 
   var secret = "_\uD83D\uDD25";
@@ -1914,6 +1922,14 @@ var heresy = (function (document,exports) {
   var cc = new WeakMap$1();
   var oc = new WeakMap$1();
 
+  var info = function info(tagName, is) {
+    return {
+      tagName: tagName,
+      is: is,
+      element: tagName === 'element'
+    };
+  };
+
   var define = function define($, definition) {
     var _ref = typeof $ === 'string' ? register($, definition, '') : register($.name, $, ''),
         Class = _ref.Class,
@@ -1921,11 +1937,7 @@ var heresy = (function (document,exports) {
         name = _ref.name,
         tagName = _ref.tagName;
 
-    setupIncludes(Class);
-    registry.map[name] = {
-      tagName: tagName,
-      is: is
-    };
+    registry.map[name] = setupIncludes(Class, tagName, is);
     registry.re = regExp(keys(registry.map));
     return Class;
   };
@@ -2029,7 +2041,6 @@ var heresy = (function (document,exports) {
     if (!element) defineProperty(Class.prototype, 'is', {
       value: is
     });
-    if ('style' in Class) injectStyle(Class.style("".concat(tagName, "[is=\"").concat(is, "\"]")));
     return {
       Class: Class,
       is: is,
@@ -2040,7 +2051,9 @@ var heresy = (function (document,exports) {
 
   var index = 0;
 
-  var setupIncludes = function setupIncludes(Class) {
+  var setupIncludes = function setupIncludes(Class, tagName, is) {
+    var details = info(tagName, is);
+    var styles = [selector(details)];
     var includes = Class.includes || Class.contains;
 
     if (includes) {
@@ -2053,11 +2066,7 @@ var heresy = (function (document,exports) {
             name = _register.name,
             tagName = _register.tagName;
 
-        map[name] = {
-          tagName: tagName,
-          is: is
-        };
-        setupIncludes(Class);
+        styles.push(selector(map[name] = setupIncludes(Class, tagName, is)));
       });
       var re = regExp(keys(map));
       defineProperty(Class, secret, {
@@ -2067,6 +2076,9 @@ var heresy = (function (document,exports) {
         }
       });
     }
+
+    if ('style' in Class) injectStyle(Class.style.apply(Class, styles));
+    return details;
   };
 
   transform(function (markup) {

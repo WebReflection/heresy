@@ -2,11 +2,15 @@
 const {define, render, html} = heresy;
 
 define('Welcome', {
-  extends: 'h1',
+  extends: 'element',
   style: comp => `
     ${comp} {
       font-size: 16px;
       font-family: sans-serif;
+      font-weight: bold;
+    }
+    ${comp} > u {
+      font-weight: normal;
     }`
   ,
   render() {

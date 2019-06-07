@@ -19,7 +19,7 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
 
   * declarative UI (i.e. `<Component class=${...}><Section data=${{...}}/></Component>`) without needing JSX transformations or tooling at all
   * locally scoped custom elements to both avoid name clashing and have components reusable in any context, similarly to what you can do with any React component
-  * automatic components name definition passed through optional `Component.style(selector)` to inject, only once per definition, related styles
+  * automatic components name definition passed through optional `Component.style(...selectors)` to inject, only once per definition, related styles
   * automatic [handleEvent](https://medium.com/@WebReflection/dom-handleevent-a-cross-platform-standard-since-year-2000-5bf17287fd38) patter to forget once for all about `this.method = this.method.bind(this)` unnecessary pattern
   * out of the box life cycle events, such as `oninit(event)`, `onconnected(event)`, `ondisconnected(event)`, or `onattributechangedcallback(event)`, so you can skip ugly `attributeChangedCallback` and other not intuitive callbacks right away (but use them if you like)
   * automatic smart components initializer via `Component.new()` to avoid all quirks related to custom elements, and built-ins, initialization
@@ -168,11 +168,13 @@ class MyButton extends HTMLButtonElement {
   static get tagName() { return 'button'; }
 
   // (optional) static callback to style components (once per definition)
-  static style(selector) {
+  //            when there are local components, it will receive also these
+  //            in definition order
+  static style(MyButton) {
     // the component could be scoped so that
     // to be sure the selector is the right one
     // always use the received component to define its styles
-    return `${selector} {
+    return `${MyButton} {
       border: 2px solid black;
     }`
   }
@@ -334,7 +336,7 @@ export default class extends HTMLParagraphElement {
 import P from './p.js';
 export default {
   extends: 'div',
-  includes: {P},
+  includes: {P},  // with its own definition
   render() {
     this.html`<P>first</P>`;
   }
@@ -344,7 +346,7 @@ export default {
 import P from './p.js';
 export default {
   extends: 'div',
-  includes: {P},
+  includes: {P},  // with its own definition
   render() {
     this.html`<P>second</P>`;
   }
@@ -369,6 +371,35 @@ render(document.body, html`<Div/>`);
 // or even document.body.appendChild(Div.new());
 
 ```
+
+## CSS - The components style precedence
+
+Components are defined once per kind, and local components style are appended live before the outer component, giving it the ability to force extra styles when needed, or improve specificity for a specific component / style when used within some other.
+
+```js
+const Div = define('Div', {
+  extends: 'div',
+  includes: {First, Second},
+  // will receive the selectors for self and included components
+  style(Div, First, Second) {
+    // since outer component style is injected after
+    // it is possible to eventually overwrite nested
+    // components through higher priority / specificity
+    return `
+      ${Div} { font-size: 16px; }
+      ${Div} > ${First} { padding: 0; }
+      ${Div} ${Second} { font-weight: smaller; }
+    `;
+    console.log([Div, First, Second].join(', '));
+  },
+  render() {
+    this.html`<First/><Second/>`;
+  }
+});
+```
+
+You can see what the `style(...)` receives reading the console in this [live demo](https://webreflection.github.io/heresy/test/local.html).
+
 
 ## CSS - How to query or style all globally defined components
 

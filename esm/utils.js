@@ -11,15 +11,19 @@ const regExp = keys => new RegExp(
 const replace = (markup, info) => {
   const {map, re} = info;
   return markup.replace(re, (_, close, name, after) => {
-    const {tagName, is} = map[name];
-    return tagName === 'element' ?
+    const {tagName, is, element} = map[name];
+    return element ?
       (close ? `</${is}>` : `<${is}${after}`) :
       (close ? `</${tagName}>` : `<${tagName} is="${is}"${after}`);
   });
-}
+};
+
+const selector = ({tagName, is, element}) =>
+                  element ? is : `${tagName}[is="${is}"]`;
 
 export {
   registry,
   regExp,
-  replace
+  replace,
+  selector
 };
