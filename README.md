@@ -412,3 +412,4 @@ tag[is^='my-button-'] {
   * it's SSR (Server Side Rendering) friendly, and custom elements hydrate automatically
   * usage of `ref` to simplify reaching nodes after render
   * automatic `render` when the method is present no `onconnected` or `connectedCallback` has been explicitly defined
+  * CSS specificity is granted per each component via `style: selector => '...'` so that **there is no need to use Shadow DOM** and related heavy polyfills
