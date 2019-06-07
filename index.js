@@ -1938,15 +1938,7 @@ var heresy = (function (document,exports) {
   };
 
   var define = function define($, definition) {
-    var _ref = typeof $ === 'string' ? register($, definition, '') : register($.name, $, ''),
-        Class = _ref.Class,
-        is = _ref.is,
-        name = _ref.name,
-        tagName = _ref.tagName;
-
-    registry.map[name] = setupIncludes(Class, tagName, is);
-    registry.re = regExp(keys(registry.map));
-    return Class;
+    return (typeof $ === 'string' ? register($, definition, '') : register($.name, $, '')).Class;
   };
 
   var fromClass = function fromClass(constructor, is) {
@@ -2029,7 +2021,14 @@ var heresy = (function (document,exports) {
         tagName = RegExp.$2;
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, is) : cc.get(definition) || fromClass(definition, is), true);
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, is) : cc.get(definition) || fromClass(definition, is), true); // for some reason the class must be fully defined upfront
+    // or components upgraded from the DOM won't have all details
+
+    if (uid === '') {
+      registry.map[name] = setupIncludes(Class, tagName, is);
+      registry.re = regExp(keys(registry.map));
+    }
+
     var args = [is, Class];
     var element = tagName === 'element';
     if (!element) args.push({

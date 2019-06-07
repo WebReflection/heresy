@@ -23,20 +23,11 @@ const oc = new WeakMap;
 
 const info = (tagName, is) => ({tagName, is, element: tagName === 'element'});
 
-const define = ($, definition) => {
-
-  const {
-    Class,
-    is, name, tagName
-  } = typeof $ === 'string' ?
-        register($, definition, '') :
-        register($.name, $, '');
-
-  registry.map[name] = setupIncludes(Class, tagName, is);
-  registry.re = regExp(keys(registry.map));
-
-  return Class;
-};
+const define = ($, definition) => (
+  typeof $ === 'string' ?
+    register($, definition, '') :
+    register($.name, $, '')
+).Class;
 
 const fromClass = (constructor, is) => {
   const Class = extend(constructor, false);
@@ -124,6 +115,13 @@ const register = ($, definition, uid) => {
       (cc.get(definition) || fromClass(definition, is)),
     true
   );
+
+  // for some reason the class must be fully defined upfront
+  // or components upgraded from the DOM won't have all details
+  if (uid === '') {
+    registry.map[name] = setupIncludes(Class, tagName, is);
+    registry.re = regExp(keys(registry.map));
+  }
 
   const args = [is, Class];
   const element = tagName === 'element';
