@@ -9,7 +9,7 @@ React-like Custom Elements via V1 API builtin extends.
 
 ## What is this _heresy_ ?
 
-This project is some sort of protest against these major trends:
+This project is some sort of answer to these major trends:
 
   * believing you cannot have tiny APIs able to compete with most famous Frameworks
   * believing custom elements are not cool enough to compete with such Frameworks
