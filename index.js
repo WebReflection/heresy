@@ -1735,7 +1735,7 @@ var heresy = (function (document,exports) {
     prototype.render = function () {
       if (init) {
         init = false;
-        var info = this.constructor[secret];
+        var info = this[secret].info;
 
         if (info) {
           patched = function patched() {
@@ -1753,7 +1753,7 @@ var heresy = (function (document,exports) {
 
   var augmented = function augmented(prototype, is) {
     if ('render' in prototype) augmentedRender(prototype);
-    var __heresy__ = [];
+    var events = [];
     var properties = {
       is: {
         value: is
@@ -1768,7 +1768,10 @@ var heresy = (function (document,exports) {
       }
     };
     properties[secret] = {
-      value: __heresy__
+      value: {
+        events: events,
+        info: null
+      }
     };
     if (!('handleEvent' in prototype)) properties.handleEvent = {
       configurable: configurable,
@@ -1777,8 +1780,7 @@ var heresy = (function (document,exports) {
     // ensure render with an init is triggered after
 
     if ('oninit' in prototype) {
-      __heresy__.push('init');
-
+      events.push('init');
       addInit(prototype, properties, 'render');
     } // ensure all other callbacks are dispatched too
 
@@ -1793,7 +1795,7 @@ var heresy = (function (document,exports) {
           _value = _ref2[2];
 
       if (!(ce in prototype) && he in prototype) {
-        if (he.slice(0, 2) === 'on') __heresy__.push(he.slice(2));
+        if (he !== 'render') events.push(he.slice(2));
 
         if (ce in properties) {
           var original = properties[ce].value;
@@ -1843,7 +1845,8 @@ var heresy = (function (document,exports) {
     });
   };
 
-  var setParsed = function setParsed(template, info) {
+  var setParsed = function setParsed(template, _ref3) {
+    var info = _ref3.info;
     var value = info ? replace(template.join(secret), info).split(secret) : template;
     $template.set(template, value);
     return value;
@@ -1862,7 +1865,7 @@ var heresy = (function (document,exports) {
       }
 
       var template = templateLiteral$1(tpl);
-      var local = $template.get(template) || setParsed(template, self.constructor[secret]);
+      var local = $template.get(template) || setParsed(template, self[secret]);
       return render(self, function () {
         return type.apply(void 0, [local].concat(values));
       });
@@ -1888,7 +1891,7 @@ var heresy = (function (document,exports) {
   function init() {
     if (!ws.has(this)) {
       ws.add(this);
-      this[secret].forEach(addListener, this);
+      this[secret].events.forEach(addListener, this);
       this.dispatchEvent(evt('init'));
     }
   }
@@ -2088,6 +2091,7 @@ var heresy = (function (document,exports) {
   var index = 0;
 
   var setupIncludes = function setupIncludes(Class, tagName, is) {
+    var prototype = Class.prototype;
     var details = info(tagName, is);
     var styles = [selector(details)];
     var includes = Class.includes || Class.contains;
@@ -2105,10 +2109,14 @@ var heresy = (function (document,exports) {
         styles.push(selector(map[name] = setupIncludes(Class, tagName, is)));
       });
       var re = regExp(keys(map));
-      defineProperty(Class, secret, {
+      var events = prototype[secret].events;
+      defineProperty(prototype, secret, {
         value: {
-          map: map,
-          re: re
+          events: events,
+          info: {
+            map: map,
+            re: re
+          }
         }
       });
     }

@@ -139,6 +139,7 @@ const register = ($, definition, uid) => {
 
 let index = 0;
 const setupIncludes = (Class, tagName, is) => {
+  const {prototype} = Class;
   const details = info(tagName, is);
   const styles = [selector(details)];
   const includes = Class.includes || Class.contains;
@@ -150,7 +151,13 @@ const setupIncludes = (Class, tagName, is) => {
       styles.push(selector(map[name] = setupIncludes(Class, tagName, is)));
     });
     const re = regExp(keys(map));
-    defineProperty(Class, secret, {value: {map, re}});
+    const {events} = prototype[secret];
+    defineProperty(prototype, secret, {
+      value: {
+        events,
+        info: {map, re}
+      }
+    });
   }
   if ('style' in Class)
     injectStyle(Class.style(...styles));

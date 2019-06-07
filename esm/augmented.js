@@ -45,6 +45,9 @@ const addInit = (prototype, properties, method) => {
     };
 };
 
+// TODO:  this could be probably moved when/if
+//        the secret in the prototype is changed
+//        without needing a one off runtime check at distance
 const augmentedRender = prototype => {
   const {render} = prototype;
   let patched = render;
@@ -52,7 +55,7 @@ const augmentedRender = prototype => {
   prototype.render = function () {
     if (init) {
       init = false;
-      const info = this.constructor[secret];
+      const {info} = this[secret];
       if (info) {
         patched = function () {
           setInfo(info);
@@ -71,7 +74,7 @@ const augmented = (prototype, is) => {
   if ('render' in prototype)
     augmentedRender(prototype);
 
-  const __heresy__ = [];
+  const events = [];
   const properties = {
     is: {value: is},
     html: {
@@ -84,7 +87,12 @@ const augmented = (prototype, is) => {
     }
   };
 
-  properties[secret] = {value: __heresy__};
+  properties[secret] = {
+    value: {
+      events,
+      info: null
+    }
+  };
 
   if (!('handleEvent' in prototype))
     properties.handleEvent = {
@@ -95,7 +103,7 @@ const augmented = (prototype, is) => {
   // setup the init dispatch only if needed
   // ensure render with an init is triggered after
   if ('oninit' in prototype) {
-    __heresy__.push('init');
+    events.push('init');
     addInit(prototype, properties, 'render');
   }
 
@@ -127,8 +135,8 @@ const augmented = (prototype, is) => {
     ]
   ].forEach(([ce, he, value]) => {
     if (!(ce in prototype) && he in prototype) {
-      if (he.slice(0, 2) === 'on')
-        __heresy__.push(he.slice(2));
+      if (he !== 'render')
+        events.push(he.slice(2));
       if (ce in properties) {
         const original = properties[ce].value;
         properties[ce] = {
@@ -160,7 +168,7 @@ const render = (where, what) => lighterRender(
   typeof what === 'function' ? what : () => what
 );
 
-const setParsed = (template, info) => {
+const setParsed = (template, {info}) => {
   const value = (
     info ?
       replace(template.join(secret), info).split(secret) :
@@ -179,7 +187,7 @@ const setWrap = (self, type, wm) => {
 const wrap = (self, type) => (tpl, ...values) => {
   const template = tl(tpl);
   const local = $template.get(template) ||
-                setParsed(template, self.constructor[secret]);
+                setParsed(template, self[secret]);
   return lighterRender(self, () => type(local, ...values));
 };
 
@@ -208,7 +216,7 @@ function handleEvent(event) {
 function init() {
   if (!ws.has(this)) {
     ws.add(this);
-    this[secret].forEach(addListener, this);
+    this[secret].events.forEach(addListener, this);
     this.dispatchEvent(evt('init'));
   }
 }
