@@ -6,6 +6,7 @@
 
 React-like Custom Elements via V1 API builtin extends.
 
+
 ## What is this _heresy_ ?
 
 This project is some sort of protest against these major trends:
@@ -25,6 +26,7 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
   * an always available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
   * automatic, lazy, `this.html` and `this.svg` template literal tags, to populate a component content within its optionally local scoped defined elements
   * provide simplifications in targeting rendered nodes through React-like `ref()` utility
+
 
 ### Usage in a nutshell
 
@@ -74,6 +76,7 @@ class Item extends HTMLLiElement {
 define('MyItem:li', literal);
 ```
 
+
 #### Which tag ?
 
 The beauty and power of custom elements built-in extends is that you can literally represent any tag you want/need.
@@ -97,6 +100,7 @@ const MyElement = heresy.define('MyElement', Component);
 document.body.appendChild(MyElement.new());
 // in console: <my-element-heresy></my-element-heresy>
 ```
+
 
 ### Local components in a nutshell
 
@@ -139,9 +143,11 @@ render(document.body, html`<SiteLogin/>`);
 
 The `includes` or `contains` property, if present, must be a map of `"Name": Component` pairs, where the name could also define the tag type, like it is for `define(...)`.
 
-In the previous example, both `User` and `Pass` are components extending `input` so that the name is not necessary, but `{"User:button": User}` would be eventually valid as local component.
+In the previous example, both `User` and `Pass` are components extending `input` so that the tag name is not necessary, but `{"User:button": User}` would be eventually valid as local component.
 
-The main difference with local components is that their registry name gets polluted with a unique identifier, so that instea of `<input is="user-heresy">`, the outcome would be instead `<input is="user-123-heresy">`, and the number is associated uniquely per component, where a component can be defined, or used, differently with many other components so that name clashing won't ever be possible.
+
+#### How can components be local?
+The main difference with local components is that their registry name gets polluted with a unique identifier, so that instea of `<input is="user-heresy">`, the outcome would be instead `<input is="user-xxx-heresy">`, and the unique identifier in between is associated uniquely per component, where a component can be defined, or used, differently with many other components, so that name clashing won't ever be an issue.
 
 
 ### Class and object API summary
@@ -308,15 +314,8 @@ render(document.body, html`
 console.log(refs.h1.current); // the H1 instance/node
 ```
 
-### About nested/local custom elements definition
 
-This project brings local components definition avoiding the following issues:
-
-  * name clashing, just call `<Item>` anything you think should act like an item
-  * single class/object to define multiple components, just import the same class/object and `includes` it with in the component
-  * components in isolation don't even need to have DOM around
-
-#### Local components live example
+### Local components live example
 
 You can see the [following example live](https://webreflection.github.io/heresy/test/local.html).
 ```js
@@ -368,7 +367,7 @@ render(document.body, html`<Div/>`);
 
 ```
 
-## CSS - How to query or style globally defined components
+## CSS - How to query or style all globally defined components
 
 Every global builtin extend will have a `-heresy` suffix to ensure both that the Custom Element can be registered, but also grant a common pattern to reach components.
 
@@ -377,17 +376,17 @@ Every global builtin extend will have a `-heresy` suffix to ensure both that the
   opacity: .8;
 }
 
-/* ⚠ usable only via define, not for local / nested components */
+/* ⚠ too specific: it does not work with local components */
 tag[is='specific-heresy'] {
   display: block;
 }
 ```
 
-## CSS - How to query or style locally defined components
+## CSS - How to query or style local components
 
 When components are defined locally, there will be an incremental number between the component name and `-heresy` suffix.
 
-Instead of addressing a specific suffix, it is indeed suggested to address the prefix.
+Instead of addressing a specific suffix, it is instead suggested to address the known prefix.
 
 ```css
 /* ℹ usable for both global registered components and nested */
@@ -401,7 +400,7 @@ tag[is^='my-button-'] {
 ## Project Achievements
 
   * declared elements are the instance you'd expect (no virtual, no facade)
-  * declared elements can be of any kind (table, tr, select, option, ...)
+  * declared elements can be of any kind (table, tr, select, option, ...), including element
   * declare any component within other components breaking the limits of a single, name-clashing based, registry
   * any attribute change, or node lifecycle, can be tracked via Custom Elements V1 API (no componentDidMount and friends)
   * `oninit`, `onconnected`, `ondisconnected`, and `onattributechanged` events out of the box
@@ -409,3 +408,5 @@ tag[is^='my-button-'] {
   * no redundant dom nodes, no ghost fragments, a clean as possible output
   * the lighterhtml performance, fine tuned for this specific use case
   * it's SSR (Server Side Rendering) friendly, and custom elements hydrate automatically
+  * usage of `ref` to simplify reaching nodes after render
+  * automatic `render` when the method is present no `onconnected` or `connectedCallback` has been explicitly defined
