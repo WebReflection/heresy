@@ -10,7 +10,7 @@ import {
   svg as lighterSVG
 } from 'lighterhtml';
 
-import {replace, setInfo} from './utils.js';
+import {replace} from './utils.js';
 
 const secret = '_\uD83D\uDD25';
 
@@ -18,7 +18,6 @@ const {defineProperties} = Object;
 
 const $html = new WeakMap;
 const $svg = new WeakMap;
-const $template = new WeakMap;
 const ws = new WeakSet;
 
 const configurable = true;
@@ -45,38 +44,10 @@ const addInit = (prototype, properties, method) => {
     };
 };
 
-// TODO:  this could be probably moved when/if
-//        the secret in the prototype is changed
-//        without needing a one off runtime check at distance
-const augmentedRender = prototype => {
-  const {render} = prototype;
-  let patched = render;
-  let init = true;
-  prototype.render = function () {
-    if (init) {
-      init = false;
-      const {info} = this[secret];
-      if (info) {
-        patched = function () {
-          setInfo(info);
-          const out = render.apply(this, arguments);
-          setInfo(null);
-          return out;
-        };
-      }
-    }
-    return patched.apply(this, arguments);
-  };
-};
-
-const augmented = (prototype, is) => {
-
-  if ('render' in prototype)
-    augmentedRender(prototype);
+const augmented = prototype => {
 
   const events = [];
   const properties = {
-    is: {value: is},
     html: {
       configurable,
       get: getHTML
@@ -168,26 +139,26 @@ const render = (where, what) => lighterRender(
   typeof what === 'function' ? what : () => what
 );
 
-const setParsed = (template, {info}) => {
+const setParsed = (wm, template, {info}) => {
   const value = (
     info ?
       replace(template.join(secret), info).split(secret) :
       template
   );
-  $template.set(template, value);
+  wm.set(template, value);
   return value;
 };
 
 const setWrap = (self, type, wm) => {
-  const fn = wrap(self, type);
+  const fn = wrap(self, type, new WeakMap);
   wm.set(self, fn);
   return fn;
 };
 
-const wrap = (self, type) => (tpl, ...values) => {
+const wrap = (self, type, wm) => (tpl, ...values) => {
   const template = tl(tpl);
-  const local = $template.get(template) ||
-                setParsed(template, self[secret]);
+  const local = wm.get(template) ||
+                setParsed(wm, template, self[secret]);
   return lighterRender(self, () => type(local, ...values));
 };
 

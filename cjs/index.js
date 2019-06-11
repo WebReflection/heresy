@@ -4,7 +4,7 @@ const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /
 const {transform} = require('lighterhtml');
 
 const {augmented, render, secret, html, svg} = require('./augmented.js');
-const {registry, replace, regExp, selector} = require('./utils.js');
+const {registry, replace, regExp, selector, getInfo, setInfo} = require('./utils.js');
 const extend = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('./extend.js'));
 
 const {
@@ -29,20 +29,20 @@ const define = ($, definition) => (
     register($.name, $, '')
 ).Class;
 
-const fromClass = (constructor, is) => {
+const fromClass = constructor => {
   const Class = extend(constructor, false);
-  augmented(Class.prototype, is);
+  augmented(Class.prototype);
   cc.set(constructor, Class);
   return Class;
 };
 
-const fromObject = (object, is) => {
+const fromObject = object => {
   const {statics, prototype, tag} = grabInfo(object);
   const Class = extend(
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
   );
-  augmented(defineProperties(Class.prototype, prototype), is);
+  augmented(defineProperties(Class.prototype, prototype));
   oc.set(object, defineProperties(Class, statics));
   return Class;
 };
@@ -111,10 +111,18 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition, is)) :
-      (cc.get(definition) || fromClass(definition, is)),
+      (oc.get(definition) || fromObject(definition)) :
+      (cc.get(definition) || fromClass(definition)),
     true
   );
+
+  const element = tagName === 'element';
+  defineProperty(Class, 'new', {
+    value: element ?
+      () => document.createElement(is) :
+      () => document.createElement(tagName, {is})
+  });
+  defineProperty(Class.prototype, 'is', {value: is});
 
   // for some reason the class must be fully defined upfront
   // or components upgraded from the DOM won't have all details
@@ -124,16 +132,9 @@ const register = ($, definition, uid) => {
   }
 
   const args = [is, Class];
-  const element = tagName === 'element';
   if (!element)
     args.push({extends: tagName});
   customElements.define(...args);
-
-  defineProperty(Class, 'new', {
-    value: () => element ?
-                  document.createElement(is) :
-                  document.createElement(tagName, {is})
-  });
 
   return {Class, is, name, tagName};
 };
@@ -153,12 +154,24 @@ const setupIncludes = (Class, tagName, is) => {
     });
     const re = regExp(keys(map));
     const {events} = prototype[secret];
-    defineProperty(prototype, secret, {
-      value: {
-        events,
-        info: {map, re}
-      }
-    });
+    const value = {
+      events,
+      info: {map, re}
+    };
+    defineProperty(prototype, secret, {value});
+    if ('render' in prototype) {
+      const {render} = prototype;
+      const {info} = value;
+      defineProperty(prototype, 'render', {
+        value() {
+          const tmp = getInfo();
+          setInfo(info);
+          const out = render.apply(this, arguments);
+          setInfo(tmp);
+          return out;
+        }
+      });
+    }
   }
   if ('style' in Class)
     injectStyle(Class.style(...styles));

@@ -1696,6 +1696,10 @@ var heresy = (function (document,exports) {
     return element ? is : "".concat(tagName, "[is=\"").concat(is, "\"]");
   };
 
+  var getInfo = function getInfo() {
+    return tmp;
+  };
+
   var setInfo = function setInfo(info) {
     tmp = info;
   };
@@ -1704,7 +1708,6 @@ var heresy = (function (document,exports) {
   var defineProperties = Object.defineProperties;
   var $html = new WeakMap$1();
   var $svg = new WeakMap$1();
-  var $template = new WeakMap$1();
   var ws = new WeakSet$1();
   var configurable = true;
   var attributeChangedCallback = 'attributeChangedCallback';
@@ -1727,37 +1730,9 @@ var heresy = (function (document,exports) {
     };
   };
 
-  var augmentedRender = function augmentedRender(prototype) {
-    var render = prototype.render;
-    var patched = render;
-    var init = true;
-
-    prototype.render = function () {
-      if (init) {
-        init = false;
-        var info = this[secret].info;
-
-        if (info) {
-          patched = function patched() {
-            setInfo(info);
-            var out = render.apply(this, arguments);
-            setInfo(null);
-            return out;
-          };
-        }
-      }
-
-      return patched.apply(this, arguments);
-    };
-  };
-
-  var augmented = function augmented(prototype, is) {
-    if ('render' in prototype) augmentedRender(prototype);
+  var augmented = function augmented(prototype) {
     var events = [];
     var properties = {
-      is: {
-        value: is
-      },
       html: {
         configurable: configurable,
         get: getHTML
@@ -1845,27 +1820,27 @@ var heresy = (function (document,exports) {
     });
   };
 
-  var setParsed = function setParsed(template, _ref3) {
+  var setParsed = function setParsed(wm, template, _ref3) {
     var info = _ref3.info;
     var value = info ? replace(template.join(secret), info).split(secret) : template;
-    $template.set(template, value);
+    wm.set(template, value);
     return value;
   };
 
   var setWrap = function setWrap(self, type, wm) {
-    var fn = wrap(self, type);
+    var fn = wrap(self, type, new WeakMap$1());
     wm.set(self, fn);
     return fn;
   };
 
-  var wrap = function wrap(self, type) {
+  var wrap = function wrap(self, type, wm) {
     return function (tpl) {
       for (var _len3 = arguments.length, values = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
         values[_key3 - 1] = arguments[_key3];
       }
 
       var template = templateLiteral$1(tpl);
-      var local = $template.get(template) || setParsed(template, self[secret]);
+      var local = wm.get(template) || setParsed(wm, template, self[secret]);
       return render(self, function () {
         return type.apply(void 0, [local].concat(values));
       });
@@ -1977,21 +1952,21 @@ var heresy = (function (document,exports) {
     return (typeof $ === 'string' ? register($, definition, '') : register($.name, $, '')).Class;
   };
 
-  var fromClass = function fromClass(constructor, is) {
+  var fromClass = function fromClass(constructor) {
     var Class = extend(constructor, false);
-    augmented(Class.prototype, is);
+    augmented(Class.prototype);
     cc.set(constructor, Class);
     return Class;
   };
 
-  var fromObject = function fromObject(object, is) {
+  var fromObject = function fromObject(object) {
     var _grabInfo = grabInfo(object),
         statics = _grabInfo.statics,
         prototype = _grabInfo.prototype,
         tag = _grabInfo.tag;
 
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
-    augmented(defineProperties$1(Class.prototype, prototype), is);
+    augmented(defineProperties$1(Class.prototype, prototype));
     oc.set(object, defineProperties$1(Class, statics));
     return Class;
   };
@@ -2057,7 +2032,20 @@ var heresy = (function (document,exports) {
         tagName = RegExp.$2;
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, is) : cc.get(definition) || fromClass(definition, is), true); // for some reason the class must be fully defined upfront
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition) : cc.get(definition) || fromClass(definition), true);
+    var element = tagName === 'element';
+    defineProperty(Class, 'new', {
+      value: element ? function () {
+        return document.createElement(is);
+      } : function () {
+        return document.createElement(tagName, {
+          is: is
+        });
+      }
+    });
+    defineProperty(Class.prototype, 'is', {
+      value: is
+    }); // for some reason the class must be fully defined upfront
     // or components upgraded from the DOM won't have all details
 
     if (uid === '') {
@@ -2066,20 +2054,12 @@ var heresy = (function (document,exports) {
     }
 
     var args = [is, Class];
-    var element = tagName === 'element';
     if (!element) args.push({
       "extends": tagName
     });
 
     (_customElements = customElements).define.apply(_customElements, args);
 
-    defineProperty(Class, 'new', {
-      value: function value() {
-        return element ? document.createElement(is) : document.createElement(tagName, {
-          is: is
-        });
-      }
-    });
     return {
       Class: Class,
       is: is,
@@ -2110,15 +2090,32 @@ var heresy = (function (document,exports) {
       });
       var re = regExp(keys(map));
       var events = prototype[secret].events;
-      defineProperty(prototype, secret, {
-        value: {
-          events: events,
-          info: {
-            map: map,
-            re: re
-          }
+      var value = {
+        events: events,
+        info: {
+          map: map,
+          re: re
         }
+      };
+      defineProperty(prototype, secret, {
+        value: value
       });
+
+      if ('render' in prototype) {
+        var _render = prototype.render;
+        var _info = value.info;
+        defineProperty(prototype, 'render', {
+          value: function value() {
+            var tmp = getInfo();
+            setInfo(_info);
+
+            var out = _render.apply(this, arguments);
+
+            setInfo(tmp);
+            return out;
+          }
+        });
+      }
     }
 
     if ('style' in Class) injectStyle(Class.style.apply(Class, styles));

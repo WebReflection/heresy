@@ -2,6 +2,7 @@ const {define, render, html} = heresy;
 
 import First from './first.js';
 import Second from './second.js';
+import Third from './third.js';
 
 const Div = define('Div', {
   // should receive style for First and Second too
@@ -18,7 +19,18 @@ const Div = define('Div', {
   }
 });
 
-// either
-render(document.body, html`<Div/>`);
+define('ElementExample', {
+  style(Comp, First, Third) {
+    console.log([Comp, First, Third].join(', '));
+  },
+  extends: 'element',
+  includes: {First, Third},
+  render() {
+    this.html`<First/><Third/>`;
+  }
+});
 
-// or document.body.appendChild(Div.new());
+// either
+render(document.body, html`<Div/><ElementExample/>`);
+
+// or document.body.append(Div.new(), ElementExample.new());

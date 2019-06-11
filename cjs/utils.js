@@ -23,10 +23,12 @@ const replace = (markup, info) => {
 const selector = ({tagName, is, element}) =>
                   element ? is : `${tagName}[is="${is}"]`;
 
+const getInfo = () => tmp;
 const setInfo = info => { tmp = info; };
 
 exports.registry = registry;
 exports.regExp = regExp;
 exports.replace = replace;
 exports.selector = selector;
+exports.getInfo = getInfo;
 exports.setInfo = setInfo;
