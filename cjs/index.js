@@ -4,7 +4,15 @@ const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /
 const {transform} = require('lighterhtml');
 
 const {augmented, render, secret, html, svg} = require('./augmented.js');
-const {registry, replace, regExp, selector, getInfo, setInfo} = require('./utils.js');
+const {
+  hash,
+  registry,
+  replace,
+  regExp,
+  selector,
+  getInfo,
+  setInfo
+} = require('./utils.js');
 const extend = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('./extend.js'));
 
 const {
@@ -127,7 +135,8 @@ const register = ($, definition, uid) => {
   // for some reason the class must be fully defined upfront
   // or components upgraded from the DOM won't have all details
   if (uid === '') {
-    registry.map[name] = setupIncludes(Class, tagName, is);
+    const id = hash(is.slice(0, -7).toUpperCase());
+    registry.map[name] = setupIncludes(Class, tagName, is, {id, i: 0});
     registry.re = regExp(keys(registry.map));
   }
 
@@ -139,18 +148,17 @@ const register = ($, definition, uid) => {
   return {Class, is, name, tagName};
 };
 
-let index = 0;
-const setupIncludes = (Class, tagName, is) => {
+const setupIncludes = (Class, tagName, is, u) => {
   const {prototype} = Class;
   const details = info(tagName, is);
   const styles = [selector(details)];
   const includes = Class.includes || Class.contains;
   if (includes) {
-    const uid = '-' + ++index;
     const map = {};
     keys(includes).forEach($ => {
+      const uid = `-${u.id}-${u.i++}`;
       const {Class, is, name, tagName} = register($, includes[$], uid);
-      styles.push(selector(map[name] = setupIncludes(Class, tagName, is)));
+      styles.push(selector(map[name] = setupIncludes(Class, tagName, is, u)));
     });
     const re = regExp(keys(map));
     const {events} = prototype[secret];

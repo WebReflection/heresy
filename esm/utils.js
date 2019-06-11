@@ -1,3 +1,14 @@
+const hash = s => {
+  const {length} = s;
+  let t = 0;
+  let i = 0;
+  while (i < length) {
+    t = ((t << 5) - t) + s.charCodeAt(i++);
+    t = t & t;
+  }
+  return t.toString(36);
+};
+
 const registry = {
   map: {},
   re: null
@@ -26,6 +37,7 @@ const getInfo = () => tmp;
 const setInfo = info => { tmp = info; };
 
 export {
+  hash,
   registry,
   regExp,
   replace,

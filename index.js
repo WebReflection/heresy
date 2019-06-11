@@ -1664,6 +1664,19 @@ var heresy = (function (document,exports) {
     }
   }();
 
+  var hash = function hash(s) {
+    var length = s.length;
+    var t = 0;
+    var i = 0;
+
+    while (i < length) {
+      t = (t << 5) - t + s.charCodeAt(i++);
+      t = t & t;
+    }
+
+    return t.toString(36);
+  };
+
   var registry = {
     map: {},
     re: null
@@ -2049,7 +2062,11 @@ var heresy = (function (document,exports) {
     // or components upgraded from the DOM won't have all details
 
     if (uid === '') {
-      registry.map[name] = setupIncludes(Class, tagName, is);
+      var id = hash(is.slice(0, -7).toUpperCase());
+      registry.map[name] = setupIncludes(Class, tagName, is, {
+        id: id,
+        i: 0
+      });
       registry.re = regExp(keys(registry.map));
     }
 
@@ -2068,25 +2085,24 @@ var heresy = (function (document,exports) {
     };
   };
 
-  var index = 0;
-
-  var setupIncludes = function setupIncludes(Class, tagName, is) {
+  var setupIncludes = function setupIncludes(Class, tagName, is, u) {
     var prototype = Class.prototype;
     var details = info(tagName, is);
     var styles = [selector(details)];
     var includes = Class.includes || Class.contains;
 
     if (includes) {
-      var uid = '-' + ++index;
       var map = {};
       keys(includes).forEach(function ($) {
+        var uid = "-".concat(u.id, "-").concat(u.i++);
+
         var _register = register($, includes[$], uid),
             Class = _register.Class,
             is = _register.is,
             name = _register.name,
             tagName = _register.tagName;
 
-        styles.push(selector(map[name] = setupIncludes(Class, tagName, is)));
+        styles.push(selector(map[name] = setupIncludes(Class, tagName, is, u)));
       });
       var re = regExp(keys(map));
       var events = prototype[secret].events;
