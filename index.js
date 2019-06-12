@@ -1664,6 +1664,59 @@ var heresy = (function (document,exports) {
     }
   }();
 
+  var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
+
+  try {
+    transpiled = new {
+      o: function o() {}
+    }.o();
+  } catch ($) {}
+
+  var extend = function extend(Super) {
+    return (
+      /*#__PURE__*/
+      function (_Super) {
+        _inherits(_class, _Super);
+
+        function _class() {
+          _classCallCheck(this, _class);
+
+          return _possibleConstructorReturn(this, _getPrototypeOf(_class).apply(this, arguments));
+        }
+
+        return _class;
+      }(Super)
+    );
+  };
+
+  if (transpiled) {
+    var getPrototypeOf = Object.getPrototypeOf,
+        setPrototypeOf = Object.setPrototypeOf;
+
+    var _ref = (typeof Reflect === "undefined" ? "undefined" : typeof(Reflect)) === 'object' ? Reflect : {
+      construct: function construct(Super, args, Target) {
+        var a = [null];
+
+        for (var i = 0; i < args.length; i++) {
+          a.push(args[i]);
+        }
+
+        var Parent = Super.bind.apply(Super, a);
+        return setPrototypeOf(new Parent(), Target.prototype);
+      }
+    },
+        construct = _ref.construct;
+
+    extend = function extend(Super, cutTheMiddleMan) {
+      function Class() {
+        return construct(cutTheMiddleMan ? getPrototypeOf(Super) : Super, arguments, Class);
+      }
+
+      setPrototypeOf(Class.prototype, Super.prototype);
+      return setPrototypeOf(Class, Super);
+    };
+  }
+
   var hash = function hash(s) {
     var length = s.length;
     var t = 0;
@@ -1689,9 +1742,9 @@ var heresy = (function (document,exports) {
   var tmp = null;
 
   var replace = function replace(markup, info) {
-    var _ref = tmp || info,
-        map = _ref.map,
-        re = _ref.re;
+    var _ref2 = tmp || info,
+        map = _ref2.map,
+        re = _ref2.re;
 
     return markup.replace(re, function (_, close, name, after) {
       var _map$name = map[name],
@@ -1702,10 +1755,10 @@ var heresy = (function (document,exports) {
     });
   };
 
-  var selector = function selector(_ref2) {
-    var tagName = _ref2.tagName,
-        is = _ref2.is,
-        element = _ref2.element;
+  var selector = function selector(_ref3) {
+    var tagName = _ref3.tagName,
+        is = _ref3.is,
+        element = _ref3.element;
     return element ? is : "".concat(tagName, "[is=\"").concat(is, "\"]");
   };
 
@@ -1903,42 +1956,6 @@ var heresy = (function (document,exports) {
   function ondisconnected() {
     this.dispatchEvent(evt('disconnected'));
   }
-
-  var construct = Reflect.construct,
-      getPrototypeOf = Reflect.getPrototypeOf,
-      setPrototypeOf = Reflect.setPrototypeOf;
-  var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
-
-  try {
-    transpiled = new {
-      o: function o() {}
-    }.o();
-  } catch ($) {}
-
-  var extend = transpiled ? function (Super, cutTheMiddleMan) {
-    function Class() {
-      return construct(cutTheMiddleMan ? getPrototypeOf(Super) : Super, arguments, Class);
-    }
-
-    setPrototypeOf(Class, Super);
-    setPrototypeOf(Class.prototype, Super.prototype);
-    return Class;
-  } : function (Super) {
-    return (
-      /*#__PURE__*/
-      function (_Super) {
-        _inherits(_class, _Super);
-
-        function _class() {
-          _classCallCheck(this, _class);
-
-          return _possibleConstructorReturn(this, _getPrototypeOf(_class).apply(this, arguments));
-        }
-
-        return _class;
-      }(Super)
-    );
-  };
 
   var create$1 = Object.create,
       defineProperty = Object.defineProperty,

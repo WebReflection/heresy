@@ -5,6 +5,7 @@ const {transform} = require('lighterhtml');
 
 const {augmented, render, secret, html, svg} = require('./augmented.js');
 const {
+  extend,
   hash,
   registry,
   replace,
@@ -13,7 +14,6 @@ const {
   getInfo,
   setInfo
 } = require('./utils.js');
-const extend = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('./extend.js'));
 
 const {
   create,

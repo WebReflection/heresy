@@ -1,12 +1,21 @@
 'use strict';
-const {construct, getPrototypeOf, setPrototypeOf} = Reflect;
-
 let transpiled = null;
 // the angry koala check @WebReflection/status/1133757401482584064
 try { transpiled = new {o(){}}.o; } catch($) {}
 
-Object.defineProperty(exports, '__esModule', {value: true}).default = transpiled ?
-  function (Super, cutTheMiddleMan) {
+let extend = Super => class extends Super {};
+if (transpiled) {
+  const {getPrototypeOf, setPrototypeOf} = Object;
+  const {construct} = typeof Reflect === 'object' ? Reflect : {
+    construct(Super, args, Target) {
+      const a = [null];
+      for (let i = 0; i < args.length; i++)
+        a.push(args[i]);
+      const Parent = Super.bind.apply(Super, a);
+      return setPrototypeOf(new Parent, Target.prototype);
+    }
+  };
+  extend = function (Super, cutTheMiddleMan) {
     function Class() {
       return construct(
         cutTheMiddleMan ?
@@ -16,8 +25,9 @@ Object.defineProperty(exports, '__esModule', {value: true}).default = transpiled
         Class
       );
     }
-    setPrototypeOf(Class, Super);
     setPrototypeOf(Class.prototype, Super.prototype);
-    return Class;
-  } :
-  Super => class extends Super {};
+    return setPrototypeOf(Class, Super);
+  };
+}
+
+Object.defineProperty(exports, '__esModule', {value: true}).default = extend;

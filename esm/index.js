@@ -4,6 +4,7 @@ import {transform} from 'lighterhtml';
 
 import {augmented, render, secret, html, svg} from './augmented.js';
 import {
+  extend,
   hash,
   registry,
   replace,
@@ -11,7 +12,6 @@ import {
   selector,
   getInfo, setInfo
 } from './utils.js';
-import extend from './extend.js';
 
 const {
   create,
