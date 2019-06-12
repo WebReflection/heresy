@@ -251,7 +251,7 @@ The following list describes the _heresy_'s compatibility break down:
   * you don't need Safari polyfill if you only extend `element`, but you'll miss out 90% of fun with programming through built-in extends
 
 
-### Broader compatibility in a nutshell
+### Broader wider compatibility in a nutshell
 
 ```html
 <script>
@@ -273,6 +273,13 @@ The following list describes the _heresy_'s compatibility break down:
   https://github.com/ungap/custom-elements-builtin
 */</script>
 ```
+
+Alternatively, you can use this minified version to never download the Safari only polyfill.
+
+```html
+<script>if(this.customElements)try{customElements.define('built-in',document.createElement('p').constructor,{'extends':'p'})}catch(a){document.write('<script src="//unpkg.com/@ungap/custom-elements-builtin"><'+'/script>')}else document.write('<script src="//unpkg.com/document-register-element"><'+'/script>');</script>
+```
+
 
 
 ## Concept

@@ -13,22 +13,8 @@
       font-size: large;
     }
     </style>
-    <script>
-      // Patch for IE9 and IE10 (browsers with no WeakMap)
-      // frozen template literals cannot be addressed by common WeakMap polyfills
-      // this patch avoid Object.freeze to break when template literals are passed to WeakMaps
-      this.WeakMap||!function(O,f){f=O.freeze;O.freeze=function(o){return 'raw' in o?o:f(o)}}(Object);
-    </script>
-    <script>
-      // Patch for all IE, Edge, and older browsers without customElements
-      // completely ignored/irrelevant for any other modern browser
-      // https://github.com/WebReflection/document-register-element
-      this.customElements||document.write('<script src="3rd/dre.js"><\x2fscript>');
-    </script>
-    <script defer src="3rd/ceb.js">/*
-      ~1K Patch for Safari/WebKit
-      https://github.com/ungap/custom-elements-builtin
-    */</script>
+    <script>this.WeakMap||!function(O,f){f=O.freeze;O.freeze=function(o){return 'raw' in o?o:f(o)}}(Object);</script>
+    <script>if(this.customElements)try{customElements.define('built-in',document.createElement('p').constructor,{'extends':'p'})}catch(a){document.write('<script src="3rd/ceb.js"><'+'/script>')}else document.write('<script src="3rd/dre.js"><'+'/script>');</script>
     <script defer src="../min.js">/* 🔥 heresy 🔥 */</script>
     <script type="module">
     // This is UBL https://github.com/WebReflection/ubl
