@@ -8,6 +8,7 @@ Be the DOM.
 
 React-like Custom Elements via V1 API builtin extends.
 
+[Also available for **SSR**](https://github.com/WebReflection/heresy-ssr#readme).
 
 ## What is this _heresy_ ?
 
