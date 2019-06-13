@@ -6,9 +6,7 @@ Be the DOM.
 
 ![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
 
-React-like Custom Elements via V1 API builtin extends.
-
-**[Also available for SSR](https://github.com/WebReflection/heresy-ssr#readme)**
+React-like Custom Elements via V1 API builtin extends. **[Also available for SSR](https://github.com/WebReflection/heresy-ssr#readme)**
 
 - - -
 
