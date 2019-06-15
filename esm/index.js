@@ -87,14 +87,16 @@ const grabInfo = object => {
 };
 
 const injectStyle = cssText => {
-  const style = document.createElement('style');
-  style.type = 'text/css';
-  if (style.styleSheet)
-    style.styleSheet.cssText = cssText;
-  else
-    style.appendChild(document.createTextNode(cssText));
-  const head = document.head || document.querySelector('head');
-  head.insertBefore(style, head.lastChild);
+  if (cssText.length) {
+    const style = document.createElement('style');
+    style.type = 'text/css';
+    if (style.styleSheet)
+      style.styleSheet.cssText = cssText;
+    else
+      style.appendChild(document.createTextNode(cssText));
+    const head = document.head || document.querySelector('head');
+    head.insertBefore(style, head.lastChild);
+  }
 };
 
 const ref = (self, name) => self ?
