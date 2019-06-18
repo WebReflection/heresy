@@ -2052,13 +2052,12 @@ var heresy = (function (document,exports) {
   var register = function register($, definition, uid) {
     var _customElements;
 
-    var up = 'Invalid name or tag';
-    if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($)) throw up;
+    if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($)) throw 'Invalid name';
     var name = RegExp.$1,
         asTag = RegExp.$3,
         asSemi = RegExp.$4;
     var tagName = asTag || asSemi || definition.tagName || definition["extends"];
-    if (!/[A-Za-z0-9:_-]+/.test(tagName)) throw up;
+    if (!/^[A-Za-z0-9:_-]+$/.test(tagName)) throw 'Invalid tag';
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
     var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);

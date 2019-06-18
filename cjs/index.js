@@ -101,16 +101,14 @@ const ref = (self, name) => self ?
 
 const register = ($, definition, uid) => {
 
-  const up = 'Invalid name or tag';
-
   if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($))
-    throw up;
+    throw 'Invalid name';
 
   const {$1: name, $3: asTag, $4: asSemi} = RegExp;
   const tagName = asTag || asSemi || definition.tagName || definition.extends;
 
-  if (!/[A-Za-z0-9:_-]+/.test(tagName))
-    throw up;
+  if (!/^[A-Za-z0-9:_-]+$/.test(tagName))
+    throw 'Invalid tag';
 
   const is = hyphenized(name) + uid + '-heresy';
 
