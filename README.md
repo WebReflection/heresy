@@ -69,7 +69,7 @@ const literal = {
 define('Item', literal);
 ```
 
-Alternatively, it is possible to not include name and tag, defining these via the `Comp:tag` convention.
+Alternatively, it is possible to not include name and tag, defining these via the `Comp:tag` or `Comp<tag>` convention.
 
 ```js
 class Item extends HTMLLiElement {
@@ -77,6 +77,8 @@ class Item extends HTMLLiElement {
 }
 
 define('MyItem:li', literal);
+// OR
+define('MyItem<li>', literal);
 ```
 
 
@@ -148,7 +150,7 @@ render(document.body, html`<SiteLogin/>`);
 
 The `includes` or `contains` property, if present, must be a map of `"Name": Component` pairs, where the name could also define the tag type, like it does with `define(...)`.
 
-In the previous example both `User` and `Pass` are components extending `input`, so that the tag name is not necessary, but `{"User:button": User}` would eventually be valid as a local component.
+In the previous example both `User` and `Pass` are components extending `input`, so that the tag name is not necessary, but `{"User<button>": User}`, or `{"User:button": User}`, would eventually be valid as a local component.
 
 
 #### How can components be local?
@@ -230,7 +232,7 @@ const Generic = {
 define(MyButton);
 
 // or define the custom element via Component:tag
-define('MyButton:button', MyButton);
+define('MyButton<button>', MyButton);
 
 // populate some node
 render(document.body, html`<MyButton props=${{name: 'Magic'}} />`);
@@ -306,10 +308,10 @@ define(class Div extends HTMLDivElement {
 });
 
 // a paragraph
-define('P:p', class extends HTMLParagraphElement {});
+define('P<p>', class extends HTMLParagraphElement {});
 
 // a h1
-define('H1:h1', class extends HTMLHeadingElement {});
+define('H1<h1>', class extends HTMLHeadingElement {});
 
 // render them all + ref example
 const refs = {};

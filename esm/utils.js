@@ -46,7 +46,7 @@ const registry = {
 };
 
 const regExp = keys => new RegExp(
-  `<(/)?(${keys.join('|')})([^A-Za-z0-9_])`,
+  `<(/)?(${keys.join('|')})([^A-Za-z0-9:_-])`,
   'g'
 );
 

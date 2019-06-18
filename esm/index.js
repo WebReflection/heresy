@@ -42,8 +42,8 @@ const fromClass = constructor => {
   return Class;
 };
 
-const fromObject = object => {
-  const {statics, prototype, tag} = grabInfo(object);
+const fromObject = (object, tag) => {
+  const {statics, prototype} = grabInfo(object);
   const Class = extend(
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
@@ -53,16 +53,10 @@ const fromObject = object => {
   return Class;
 };
 
-const getTag = Class => Class.tagName || Class.extends;
-
 const grabInfo = object => {
   const statics = create(null);
   const prototype = create(null);
-  const info = {
-    statics,
-    prototype,
-    tag: getTag(object)
-  };
+  const info = {prototype, statics};
   getOwnPropertyNames(object).concat(
     getOwnPropertySymbols(object)
   ).forEach(name => {
@@ -105,13 +99,17 @@ const ref = (self, name) => self ?
 
 const register = ($, definition, uid) => {
 
-  if ($.indexOf(':') < 0)
-    $ += ':' + getTag(definition);
+  const up = 'Invalid name or tag';
 
-  if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($))
-    throw `Invalid name or tagName`;
+  if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($))
+    throw up;
 
-  const {$1: name, $2: tagName} = RegExp;
+  const {$1: name, $3: asTag, $4: asSemi} = RegExp;
+  const tagName = asTag || asSemi || definition.tagName || definition.extends;
+
+  if (!/[A-Za-z0-9:_-]+/.test(tagName))
+    throw up;
+
   const is = hyphenized(name) + uid + '-heresy';
 
   if (customElements.get(is))
@@ -119,7 +117,7 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition)) :
+      (oc.get(definition) || fromObject(definition, tagName)) :
       (cc.get(definition) || fromClass(definition)),
     true
   );

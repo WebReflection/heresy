@@ -1,7 +1,7 @@
 const {define, html, render} = heresy;
 
 // define the custom element (class name mandatory)
-define('MyButton:button', class extends HTMLButtonElement {
+define('MyButton<button>', class extends HTMLButtonElement {
 
   oninit(event) {
     console.log(event.type, this.nodeName, this.is);
@@ -20,13 +20,13 @@ define('MyButton:button', class extends HTMLButtonElement {
 });
 
 // a div
-define('Div:div', class extends HTMLDivElement {});
+define('Div<div>', class extends HTMLDivElement {});
 
 // a paragraph
 define('P:p', class extends HTMLParagraphElement {});
 
 // a h1
-define('H1:h1', class extends HTMLHeadingElement {});
+define('H1<h1>', class extends HTMLHeadingElement {});
 
 render(document.body, () => html`
   <Div>

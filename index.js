@@ -1736,7 +1736,7 @@ var heresy = (function (document,exports) {
   };
 
   var regExp = function regExp(keys) {
-    return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9_])"), 'g');
+    return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9:_-])"), 'g');
   };
 
   var tmp = null;
@@ -1989,11 +1989,10 @@ var heresy = (function (document,exports) {
     return Class;
   };
 
-  var fromObject = function fromObject(object) {
+  var fromObject = function fromObject(object, tag) {
     var _grabInfo = grabInfo(object),
         statics = _grabInfo.statics,
-        prototype = _grabInfo.prototype,
-        tag = _grabInfo.tag;
+        prototype = _grabInfo.prototype;
 
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
     augmented(defineProperties$1(Class.prototype, prototype));
@@ -2001,17 +2000,12 @@ var heresy = (function (document,exports) {
     return Class;
   };
 
-  var getTag = function getTag(Class) {
-    return Class.tagName || Class["extends"];
-  };
-
   var grabInfo = function grabInfo(object) {
     var statics = create$1(null);
     var prototype = create$1(null);
     var info = {
-      statics: statics,
       prototype: prototype,
-      tag: getTag(object)
+      statics: statics
     };
     getOwnPropertyNames(object).concat(getOwnPropertySymbols(object)).forEach(function (name) {
       var descriptor = getOwnPropertyDescriptor(object, name);
@@ -2058,13 +2052,16 @@ var heresy = (function (document,exports) {
   var register = function register($, definition, uid) {
     var _customElements;
 
-    if ($.indexOf(':') < 0) $ += ':' + getTag(definition);
-    if (!/^([A-Z][A-Za-z0-9_]*):([A-Za-z0-9-]+)$/.test($)) throw "Invalid name or tagName";
+    var up = 'Invalid name or tag';
+    if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($)) throw up;
     var name = RegExp.$1,
-        tagName = RegExp.$2;
+        asTag = RegExp.$3,
+        asSemi = RegExp.$4;
+    var tagName = asTag || asSemi || definition.tagName || definition["extends"];
+    if (!/[A-Za-z0-9:_-]+/.test(tagName)) throw up;
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition) : cc.get(definition) || fromClass(definition), true);
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
     var element = tagName === 'element';
     defineProperty(Class, 'new', {
       value: element ? function () {
