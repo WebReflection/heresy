@@ -1,6 +1,6 @@
 {
   "name": "heresy",
-  "version": "0.12.13",
+  "version": "0.12.14",
   "description": "lighterhtml based custom elements builtins",
   "main": "cjs/index.js",
   "module": "esm/index.js",
