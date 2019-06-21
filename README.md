@@ -25,6 +25,7 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
   * automatic component name definition passed through the optional `Component.style(...selectors)` to inject related styles only once per definition
   * automatic [handleEvent](https://medium.com/@WebReflection/dom-handleevent-a-cross-platform-standard-since-year-2000-5bf17287fd38) pattern so that you can forget the unnecessary overhead of `this.method = this.method.bind(this)`
   * out of the box lifecycle events, such as `oninit(event)`, `onconnected(event)`, `ondisconnected(event)` or `onattributechanged(event)`, so that you can skip the ugly `attributeChangedCallback` and other unintuitive callbacks right away (but still use them if you like)
+  * out of the box `observedAttributes` and `booleanAttributes` behavior, borrowed directly from [HyperHTMLElement](https://github.com/WebReflection/hyperHTML-Element#readme) Class
   * automatic, smart component initializer via `Component.new()` that avoids all the quirks related to the initialization of custom elements and built-ins
   * an ever available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
   * automatic, lazy `this.html` and `this.svg` template literal tags, to populate a component's content within its optionally, locally scoped defined elements
@@ -76,9 +77,9 @@ class Item extends HTMLLiElement {
   render() { this.html`my name is ${this.props.name}`; }
 }
 
-define('MyItem:li', literal);
-// OR
 define('MyItem<li>', literal);
+// OR
+define('MyItem:li', literal);
 ```
 
 
@@ -197,6 +198,10 @@ class MyButton extends HTMLButtonElement {
   ondisconnected(event) {}
   onattributechanged(event = {attributeName, oldValue, newValue}) {}
 
+  // (optional) create 1:1 attribute representation as accessors
+  get observedAttributes() { return ['name', 'age']; }
+  get booleanAttributes() { return ['checked']; }
+
   // (optional) populate this button content
   //            (kinda useless with void elements such img, input, ...)
   render() {
@@ -223,8 +228,9 @@ const Generic = {
   // statics are defined on the derived class
   style(selector) {},
   observedAttributes: [],
+  booleanAttributes: [],
 
-  // all events supported too
+  // all other events supported too
   oninit() {}
 };
 
@@ -455,9 +461,10 @@ tag[is^='my-button-'] {
   * any attribute change, or node lifecycle, can be tracked via the Custom Elements V1 API (no componentDidMount and friends)
   * `oninit`, `onconnected`, `ondisconnected`, and `onattributechanged` events out of the box
   * `handleEvent` paradigm out of the box
+  * `observedAttributes` and `booleanAttributes` do what everyone expects these to do
   * no redundant dom nodes, no ghost fragments, an "as clean as possible" output
   * the performance of lighterhtml, fine tuned for this specific use case
-  * it's SSR (Server Side Rendering) friendly, and custom elements hydrate automatically
+  * it's [SSR (Server Side Rendering) friendly](https://github.com/WebReflection/heresy-ssr#readme), and custom elements hydrate automatically
   * usage of `ref` to simplify reaching nodes after render
   * automatic `render` when the method is present and no `onconnected` or `connectedCallback` has been explicitly defined
   * CSS specificity is granted per each component via `style: selector => '...'` so that **there is no need to use Shadow DOM** and the heavy polyfills related to it

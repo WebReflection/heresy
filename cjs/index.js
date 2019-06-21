@@ -39,8 +39,7 @@ const define = ($, definition) => (
 
 const fromClass = constructor => {
   const Class = extend(constructor, false);
-  augmented(Class.prototype);
-  cc.set(constructor, Class);
+  cc.set(constructor, augmented(Class));
   return Class;
 };
 
@@ -50,8 +49,9 @@ const fromObject = (object, tag) => {
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
   );
-  augmented(defineProperties(Class.prototype, prototype));
-  oc.set(object, defineProperties(Class, statics));
+  defineProperties(Class.prototype, prototype);
+  defineProperties(Class, statics);
+  oc.set(object, augmented(Class));
   return Class;
 };
 
@@ -70,6 +70,7 @@ const grabInfo = object => {
       case 'contains':
       case 'includes':
       case 'name':
+      case 'booleanAttributes':
       case 'observedAttributes':
       case 'style':
       case 'tagName':
@@ -104,8 +105,8 @@ const register = ($, definition, uid) => {
   if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($))
     throw 'Invalid name';
 
-  const {$1: name, $3: asTag, $4: asSemi} = RegExp;
-  const tagName = asTag || asSemi || definition.tagName || definition.extends;
+  const {$1: name, $3: asTag, $4: asColon} = RegExp;
+  const tagName = asTag || asColon || definition.tagName || definition.extends;
 
   if (!/^[A-Za-z0-9:_-]+$/.test(tagName))
     throw 'Invalid tag';

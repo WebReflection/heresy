@@ -45,7 +45,9 @@ const addInit = (prototype, properties, method) => {
     };
 };
 
-const augmented = prototype => {
+const augmented = Class => {
+
+  const {prototype} = Class;
 
   const events = [];
   const properties = {
@@ -124,7 +126,47 @@ const augmented = prototype => {
     }
   });
 
+  const booleanAttributes = Class.booleanAttributes || [];
+  booleanAttributes.forEach(name => {
+    if (!(name in prototype))
+      properties[name] = {
+        configurable,
+        get() { return this.hasAttribute(name); },
+        set(value) {
+          if (!value || value === 'false')
+            this.removeAttribute(name);
+          else
+            this.setAttribute(name, value);
+        }
+      };
+  });
+
+  const observedAttributes = Class.observedAttributes || [];
+  observedAttributes.forEach(name => {
+    if (!(name in prototype))
+      properties[name] = {
+        configurable,
+        get() { return this.getAttribute(name); },
+        set(value) {
+          if (value == null)
+            this.removeAttribute(name);
+          else
+            this.setAttribute(name, value);
+        }
+      };
+  });
+
   defineProperties(prototype, properties);
+
+  const attributes = booleanAttributes.concat(observedAttributes);
+  return attributes.length ?
+    defineProperties(Class, {
+      observedAttributes: {
+        configurable,
+        get: () => attributes
+      }
+    }) :
+    Class;
 };
 
 const evt = type => new Event(type);

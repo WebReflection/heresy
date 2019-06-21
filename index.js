@@ -151,44 +151,61 @@ var heresy = (function (document,exports) {
     return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
   }
 
-  /*! (c) Andrea Giammarchi - ISC */
-  var templateLiteral = function () {
+  var isNoOp = false;
 
+  var _templateLiteral = function templateLiteral(tl) {
     var RAW = 'raw';
-    var isNoOp = false;
 
-    var _templateLiteral = function templateLiteral(tl) {
-      if ( // for badly transpiled literals
-      !(RAW in tl) || // for some version of TypeScript
-      tl.propertyIsEnumerable(RAW) || // and some other version of TypeScript
-      !Object.isFrozen(tl[RAW]) || // or for Firefox < 55
-      /Firefox\/(\d+)/.test((document.defaultView.navigator || {}).userAgent) && parseFloat(RegExp.$1) < 55) {
-        var forever = {};
-
-        _templateLiteral = function templateLiteral(tl) {
-          for (var key = '.', i = 0; i < tl.length; i++) {
-            key += tl[i].length + '.' + tl[i];
-          }
-
-          return forever[key] || (forever[key] = tl);
-        };
-      } else {
-        isNoOp = true;
-      }
-
-      return TL(tl);
+    var isBroken = function isBroken(UA) {
+      return /(Firefox|Safari)\/(\d+)/.test(UA) && !/(Chrom|Android)\/(\d+)/.test(UA);
     };
 
-    return TL;
+    var broken = isBroken((document.defaultView.navigator || {}).userAgent);
+    var FTS = !(RAW in tl) || tl.propertyIsEnumerable(RAW) || !Object.isFrozen(tl[RAW]);
 
-    function TL(tl) {
-      return isNoOp ? tl : _templateLiteral(tl);
+    if (broken || FTS) {
+      var forever = {};
+
+      var foreverCache = function foreverCache(tl) {
+        for (var key = '.', i = 0; i < tl.length; i++) {
+          key += tl[i].length + '.' + tl[i];
+        }
+
+        return forever[key] || (forever[key] = tl);
+      }; // Fallback TypeScript shenanigans
+
+
+      if (FTS) _templateLiteral = foreverCache; // try fast path for other browsers:
+      // store the template as WeakMap key
+      // and forever cache it only when it's not there.
+      // this way performance is still optimal,
+      // penalized only when there are GC issues
+      else {
+          var wm = new WeakMap$1();
+
+          var set = function set(tl, unique) {
+            wm.set(tl, unique);
+            return unique;
+          };
+
+          _templateLiteral = function templateLiteral(tl) {
+            return wm.get(tl) || set(tl, foreverCache(tl));
+          };
+        }
+    } else {
+      isNoOp = true;
     }
-  }();
+
+    return TL(tl);
+  };
+
+  function TL(tl) {
+    return isNoOp ? tl : _templateLiteral(tl);
+  }
 
   function tta (template) {
     var length = arguments.length;
-    var args = [templateLiteral(template)];
+    var args = [TL(template)];
     var i = 1;
 
     while (i < length) {
@@ -1432,10 +1449,17 @@ var heresy = (function (document,exports) {
     return tag;
 
     function create(ref, id) {
+      var args = [];
       var wire = null;
-      var $ = new Tagger(type);
+      var tagger = new Tagger(type);
+
+      var callback = function callback() {
+        return tagger.apply(null, unrollArray(args, 1, 1));
+      };
+
       return ref[id] = function () {
-        var result = $.apply(null, tta.apply(null, arguments));
+        args = tta.apply(null, arguments);
+        var result = update(tagger, callback);
         return wire || (wire = wiredContent(result));
       };
     }
@@ -1629,7 +1653,7 @@ var heresy = (function (document,exports) {
   var WeakSet$1 = self$3.WeakSet;
 
   /*! (c) Andrea Giammarchi - ISC */
-  var templateLiteral$1 = function () {
+  var templateLiteral = function () {
 
     var UA,
         RAW = 'raw';
@@ -1796,7 +1820,8 @@ var heresy = (function (document,exports) {
     };
   };
 
-  var augmented = function augmented(prototype) {
+  var augmented = function augmented(Class) {
+    var prototype = Class.prototype;
     var events = [];
     var properties = {
       html: {
@@ -1853,7 +1878,40 @@ var heresy = (function (document,exports) {
         };
       }
     });
+    var booleanAttributes = Class.booleanAttributes || [];
+    booleanAttributes.forEach(function (name) {
+      if (!(name in prototype)) properties[name] = {
+        configurable: configurable,
+        get: function get() {
+          return this.hasAttribute(name);
+        },
+        set: function set(value) {
+          if (!value || value === 'false') this.removeAttribute(name);else this.setAttribute(name, value);
+        }
+      };
+    });
+    var observedAttributes = Class.observedAttributes || [];
+    observedAttributes.forEach(function (name) {
+      if (!(name in prototype)) properties[name] = {
+        configurable: configurable,
+        get: function get() {
+          return this.getAttribute(name);
+        },
+        set: function set(value) {
+          if (value == null) this.removeAttribute(name);else this.setAttribute(name, value);
+        }
+      };
+    });
     defineProperties(prototype, properties);
+    var attributes = booleanAttributes.concat(observedAttributes);
+    return attributes.length ? defineProperties(Class, {
+      observedAttributes: {
+        configurable: configurable,
+        get: function get() {
+          return attributes;
+        }
+      }
+    }) : Class;
   };
 
   var evt = function evt(type) {
@@ -1905,7 +1963,7 @@ var heresy = (function (document,exports) {
         values[_key3 - 1] = arguments[_key3];
       }
 
-      var template = templateLiteral$1(tpl);
+      var template = templateLiteral(tpl);
       var local = wm.get(template) || setParsed(wm, template, self[secret]);
       return render(self, function () {
         return type.apply(void 0, [local].concat(values));
@@ -1984,8 +2042,7 @@ var heresy = (function (document,exports) {
 
   var fromClass = function fromClass(constructor) {
     var Class = extend(constructor, false);
-    augmented(Class.prototype);
-    cc.set(constructor, Class);
+    cc.set(constructor, augmented(Class));
     return Class;
   };
 
@@ -1995,8 +2052,9 @@ var heresy = (function (document,exports) {
         prototype = _grabInfo.prototype;
 
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
-    augmented(defineProperties$1(Class.prototype, prototype));
-    oc.set(object, defineProperties$1(Class, statics));
+    defineProperties$1(Class.prototype, prototype);
+    defineProperties$1(Class, statics);
+    oc.set(object, augmented(Class));
     return Class;
   };
 
@@ -2018,6 +2076,7 @@ var heresy = (function (document,exports) {
         case 'contains':
         case 'includes':
         case 'name':
+        case 'booleanAttributes':
         case 'observedAttributes':
         case 'style':
         case 'tagName':
@@ -2055,8 +2114,8 @@ var heresy = (function (document,exports) {
     if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($)) throw 'Invalid name';
     var name = RegExp.$1,
         asTag = RegExp.$3,
-        asSemi = RegExp.$4;
-    var tagName = asTag || asSemi || definition.tagName || definition["extends"];
+        asColon = RegExp.$4;
+    var tagName = asTag || asColon || definition.tagName || definition["extends"];
     if (!/^[A-Za-z0-9:_-]+$/.test(tagName)) throw 'Invalid tag';
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");

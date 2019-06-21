@@ -37,8 +37,7 @@ const define = ($, definition) => (
 
 const fromClass = constructor => {
   const Class = extend(constructor, false);
-  augmented(Class.prototype);
-  cc.set(constructor, Class);
+  cc.set(constructor, augmented(Class));
   return Class;
 };
 
@@ -48,8 +47,9 @@ const fromObject = (object, tag) => {
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
   );
-  augmented(defineProperties(Class.prototype, prototype));
-  oc.set(object, defineProperties(Class, statics));
+  defineProperties(Class.prototype, prototype);
+  defineProperties(Class, statics);
+  oc.set(object, augmented(Class));
   return Class;
 };
 
@@ -68,6 +68,7 @@ const grabInfo = object => {
       case 'contains':
       case 'includes':
       case 'name':
+      case 'booleanAttributes':
       case 'observedAttributes':
       case 'style':
       case 'tagName':
