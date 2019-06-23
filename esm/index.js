@@ -186,6 +186,8 @@ const setupIncludes = (Class, tagName, is, u) => {
 transform(markup => replace(markup, registry));
 
 export {
+  // specialized for both client and SSR, not needed within components
   define, render,
+  // exact same heresy-ssr helpers, usable in any component
   ref, html, svg
 };
