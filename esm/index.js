@@ -186,6 +186,6 @@ const setupIncludes = (Class, tagName, is, u) => {
 transform(markup => replace(markup, registry));
 
 export {
-  define, ref,
-  render, html, svg
+  define, render,
+  ref, html, svg
 };
