@@ -367,15 +367,17 @@ var heresy = (function (document,exports) {
   var Map$1 = self$1.Map;
 
   var append = function append(get, parent, children, start, end, before) {
-    if (end - start < 2) parent.insertBefore(get(children[start], 1), before);else {
-      var fragment = parent.ownerDocument.createDocumentFragment();
+    var isSelect = 'selectedIndex' in parent;
+    var selectedIndex = -1;
 
-      while (start < end) {
-        fragment.appendChild(get(children[start++], 1));
-      }
-
-      parent.insertBefore(fragment, before);
+    while (start < end) {
+      var child = get(children[start], 1);
+      if (isSelect && selectedIndex < 0 && child.selected) selectedIndex = start;
+      parent.insertBefore(child, before);
+      start++;
     }
+
+    if (isSelect && -1 < selectedIndex) parent.selectedIndex = selectedIndex;
   };
   var eqeq = function eqeq(a, b) {
     return a == b;
@@ -769,11 +771,14 @@ var heresy = (function (document,exports) {
   // Custom
   var UID = '-' + Math.random().toFixed(6) + '%'; //                           Edge issue!
 
+  var UID_IE = false;
+
   try {
     if (!function (template, content, tabindex) {
       return content in template && (template.innerHTML = '<p ' + tabindex + '="' + UID + '"></p>', template[content].childNodes[0].getAttribute(tabindex) == UID);
     }(document.createElement('template'), 'content', 'tabindex')) {
       UID = '_dt: ' + UID.slice(1, -1) + ';';
+      UID_IE = true;
     }
   } catch (meh) {}
 
@@ -1652,41 +1657,57 @@ var heresy = (function (document,exports) {
 
   var WeakSet$1 = self$3.WeakSet;
 
-  /*! (c) Andrea Giammarchi - ISC */
-  var templateLiteral = function () {
+  var isNoOp$1 = (typeof document === "undefined" ? "undefined" : typeof(document)) !== 'object';
 
-    var UA,
-        RAW = 'raw';
-    var isNoOp = false;
+  var _templateLiteral$1 = function templateLiteral(tl) {
+    var RAW = 'raw';
 
-    var _templateLiteral = function templateLiteral(tl) {
-      if ( // for badly transpiled literals
-      !(RAW in tl) || // for some version of TypeScript
-      tl.propertyIsEnumerable(RAW) || // and some other version of TypeScript
-      !Object.isFrozen(tl[RAW]) || // or for Firefox < 55
-      /(Firefox|Safari)\/(\d+)/.test(UA = (document.defaultView.navigator || {}).userAgent) && (RegExp.$1 == 'Firefox' ? RegExp.$2 < 55 : !/(Chrome|Android)\/(\d+)/.test(UA))) {
-        var forever = {};
-
-        _templateLiteral = function templateLiteral(tl) {
-          for (var key = '.', i = 0; i < tl.length; i++) {
-            key += tl[i].length + '.' + tl[i];
-          }
-
-          return forever[key] || (forever[key] = tl);
-        };
-      } else {
-        isNoOp = true;
-      }
-
-      return TL(tl);
+    var isBroken = function isBroken(UA) {
+      return /(Firefox|Safari)\/(\d+)/.test(UA) && !/(Chrom|Android)\/(\d+)/.test(UA);
     };
 
-    return TL;
+    var broken = isBroken((document.defaultView.navigator || {}).userAgent);
+    var FTS = !(RAW in tl) || tl.propertyIsEnumerable(RAW) || !Object.isFrozen(tl[RAW]);
 
-    function TL(tl) {
-      return isNoOp ? tl : _templateLiteral(tl);
+    if (broken || FTS) {
+      var forever = {};
+
+      var foreverCache = function foreverCache(tl) {
+        for (var key = '.', i = 0; i < tl.length; i++) {
+          key += tl[i].length + '.' + tl[i];
+        }
+
+        return forever[key] || (forever[key] = tl);
+      }; // Fallback TypeScript shenanigans
+
+
+      if (FTS) _templateLiteral$1 = foreverCache; // try fast path for other browsers:
+      // store the template as WeakMap key
+      // and forever cache it only when it's not there.
+      // this way performance is still optimal,
+      // penalized only when there are GC issues
+      else {
+          var wm = new WeakMap$1();
+
+          var set = function set(tl, unique) {
+            wm.set(tl, unique);
+            return unique;
+          };
+
+          _templateLiteral$1 = function templateLiteral(tl) {
+            return wm.get(tl) || set(tl, foreverCache(tl));
+          };
+        }
+    } else {
+      isNoOp$1 = true;
     }
-  }();
+
+    return TL$1(tl);
+  };
+
+  function TL$1(tl) {
+    return isNoOp$1 ? tl : _templateLiteral$1(tl);
+  }
 
   var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
 
@@ -1760,7 +1781,7 @@ var heresy = (function (document,exports) {
   };
 
   var regExp = function regExp(keys) {
-    return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9:_-])"), 'g');
+    return new RegExp("<(/)?(".concat(keys.join('|'), ")([^A-Za-z0-9:._-])"), 'g');
   };
 
   var tmp = null;
@@ -1963,7 +1984,7 @@ var heresy = (function (document,exports) {
         values[_key3 - 1] = arguments[_key3];
       }
 
-      var template = templateLiteral(tpl);
+      var template = TL$1(tpl);
       var local = wm.get(template) || setParsed(wm, template, self[secret]);
       return render(self, function () {
         return type.apply(void 0, [local].concat(values));
@@ -2111,12 +2132,12 @@ var heresy = (function (document,exports) {
   var register = function register($, definition, uid) {
     var _customElements;
 
-    if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:_-]+)>|:([A-Za-z0-9:_-]+))?$/.test($)) throw 'Invalid name';
+    if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:._-]+)>|:([A-Za-z0-9:._-]+))?$/.test($)) throw 'Invalid name';
     var name = RegExp.$1,
         asTag = RegExp.$3,
         asColon = RegExp.$4;
     var tagName = asTag || asColon || definition.tagName || definition["extends"];
-    if (!/^[A-Za-z0-9:_-]+$/.test(tagName)) throw 'Invalid tag';
+    if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
     var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
