@@ -797,7 +797,7 @@ var heresy = (function (document,exports) {
   var spaces = ' \\f\\n\\r\\t';
   var almostEverything = '[^' + spaces + '\\/>"\'=]+';
   var attrName = '[' + spaces + ']+' + almostEverything;
-  var tagName = '<([A-Za-z]+[A-Za-z0-9:_-]*)((?:';
+  var tagName = '<([A-Za-z]+[A-Za-z0-9:._-]*)((?:';
   var attrPartials = '(?:\\s*=\\s*(?:\'[^\']*?\'|"[^"]*?"|<[^>]*?>|' + almostEverything.replace('\\/', '') + '))?)';
   var attrSeeker = new RegExp(tagName + attrName + attrPartials + '+)([' + spaces + ']*/?>)', 'g');
   var selfClosing = new RegExp(tagName + attrName + attrPartials + '*)([' + spaces + ']*/>)', 'g');
@@ -813,15 +813,6 @@ var heresy = (function (document,exports) {
 
   function fullClosing($0, $1, $2) {
     return VOID_ELEMENTS.test($1) ? $0 : '<' + $1 + $2 + '></' + $1 + '>';
-  }
-
-  function create(type, node, path, name) {
-    return {
-      name: name,
-      node: node,
-      path: path,
-      type: type
-    };
   }
 
   function find(node, path) {
@@ -858,7 +849,7 @@ var heresy = (function (document,exports) {
             holes.push( // basicHTML or other non standard engines
             // might end up having comments in nodes
             // where they shouldn't, hence this check.
-            SHOULD_USE_TEXT_CONTENT.test(node.nodeName) ? create('text', node, path) : create('any', child, path.concat(i)));
+            SHOULD_USE_TEXT_CONTENT.test(node.nodeName) ? Text(node, path) : Any(child, path.concat(i)));
           } else {
             switch (textContent.slice(0, 2)) {
               case '/*':
@@ -883,7 +874,7 @@ var heresy = (function (document,exports) {
           /* istanbul ignore if */
           if (SHOULD_USE_TEXT_CONTENT.test(node.nodeName) && trim.call(child.textContent) === UIDC) {
             parts.shift();
-            holes.push(create('text', node, path));
+            holes.push(Text(node, path));
           }
 
           break;
@@ -903,22 +894,32 @@ var heresy = (function (document,exports) {
 
     while (i < length) {
       var attribute = array[i++];
+      var direct = attribute.value === UID;
+      var sparse;
 
-      if (attribute.value === UID) {
+      if (direct || 1 < (sparse = attribute.value.split(UIDC)).length) {
         var name = attribute.name; // the following ignore is covered by IE
         // and the IE9 double viewBox test
 
         /* istanbul ignore else */
 
         if (!cache.has(name)) {
-          var realName = parts.shift().replace(/^(?:|[\S\s]*?\s)(\S+?)\s*=\s*['"]?$/, '$1');
+          var realName = parts.shift().replace(direct ? /^(?:|[\S\s]*?\s)(\S+?)\s*=\s*('|")?$/ : new RegExp('^(?:|[\\S\\s]*?\\s)(' + name + ')\\s*=\\s*(\'|")', 'i'), '$1');
           var value = attributes[realName] || // the following ignore is covered by browsers
           // while basicHTML is already case-sensitive
 
           /* istanbul ignore next */
           attributes[realName.toLowerCase()];
           cache.set(name, value);
-          holes.push(create('attr', value, path, realName));
+          if (direct) holes.push(Attr(value, path, realName, null));else {
+            var skip = sparse.length - 2;
+
+            while (skip--) {
+              parts.shift();
+            }
+
+            holes.push(Attr(value, path, realName, sparse));
+          }
         }
 
         remove.push(attribute);
@@ -962,6 +963,32 @@ var heresy = (function (document,exports) {
     }
   }
 
+  function Any(node, path) {
+    return {
+      type: 'any',
+      node: node,
+      path: path
+    };
+  }
+
+  function Attr(node, path, name, sparse) {
+    return {
+      type: 'attr',
+      node: node,
+      path: path,
+      name: name,
+      sparse: sparse
+    };
+  }
+
+  function Text(node, path) {
+    return {
+      type: 'text',
+      node: node,
+      path: path
+    };
+  }
+
   // globals
   var parsed = new WeakMap$1();
   var referenced = new WeakMap$1();
@@ -977,9 +1004,10 @@ var heresy = (function (document,exports) {
     var info = {
       content: content,
       updates: function updates(content) {
-        var callbacks = [];
+        var updates = [];
         var len = holes.length;
         var i = 0;
+        var off = 0;
 
         while (i < len) {
           var info = holes[i++];
@@ -987,31 +1015,65 @@ var heresy = (function (document,exports) {
 
           switch (info.type) {
             case 'any':
-              callbacks.push(options.any(node, []));
+              updates.push({
+                fn: options.any(node, []),
+                sparse: false
+              });
               break;
 
             case 'attr':
-              callbacks.push(options.attribute(node, info.name, info.node));
+              var sparse = info.sparse;
+              var fn = options.attribute(node, info.name, info.node);
+              if (sparse === null) updates.push({
+                fn: fn,
+                sparse: false
+              });else {
+                off += sparse.length - 2;
+                updates.push({
+                  fn: fn,
+                  sparse: true,
+                  values: sparse
+                });
+              }
               break;
 
             case 'text':
-              callbacks.push(options.text(node));
+              updates.push({
+                fn: options.text(node),
+                sparse: false
+              });
               node.textContent = '';
               break;
           }
         }
 
+        len += off;
         return function () {
           var length = arguments.length;
-          var values = length - 1;
-          var i = 1;
 
-          if (len !== values) {
-            throw new Error(values + ' values instead of ' + len + '\n' + template.join(', '));
+          if (len !== length - 1) {
+            throw new Error(length - 1 + ' values instead of ' + len + '\n' + template.join('${value}'));
           }
 
+          var i = 1;
+          var off = 1;
+
           while (i < length) {
-            callbacks[i - 1](arguments[i++]);
+            var update = updates[i - off];
+
+            if (update.sparse) {
+              var values = update.values;
+              var value = values[0];
+              var j = 1;
+              var l = values.length;
+              off += l - 2;
+
+              while (j < l) {
+                value += arguments[i++] + values[j++];
+              }
+
+              update.fn(value);
+            } else update.fn(arguments[i++]);
           }
 
           return content;
@@ -1657,58 +1719,6 @@ var heresy = (function (document,exports) {
 
   var WeakSet$1 = self$3.WeakSet;
 
-  var isNoOp$1 = (typeof document === "undefined" ? "undefined" : typeof(document)) !== 'object';
-
-  var _templateLiteral$1 = function templateLiteral(tl) {
-    var RAW = 'raw';
-
-    var isBroken = function isBroken(UA) {
-      return /(Firefox|Safari)\/(\d+)/.test(UA) && !/(Chrom|Android)\/(\d+)/.test(UA);
-    };
-
-    var broken = isBroken((document.defaultView.navigator || {}).userAgent);
-    var FTS = !(RAW in tl) || tl.propertyIsEnumerable(RAW) || !Object.isFrozen(tl[RAW]);
-
-    if (broken || FTS) {
-      var forever = {};
-
-      var foreverCache = function foreverCache(tl) {
-        for (var key = '.', i = 0; i < tl.length; i++) {
-          key += tl[i].length + '.' + tl[i];
-        }
-
-        return forever[key] || (forever[key] = tl);
-      }; // Fallback TypeScript shenanigans
-
-
-      if (FTS) _templateLiteral$1 = foreverCache; // try fast path for other browsers:
-      // store the template as WeakMap key
-      // and forever cache it only when it's not there.
-      // this way performance is still optimal,
-      // penalized only when there are GC issues
-      else {
-          var wm = new WeakMap$1();
-
-          var set = function set(tl, unique) {
-            wm.set(tl, unique);
-            return unique;
-          };
-
-          _templateLiteral$1 = function templateLiteral(tl) {
-            return wm.get(tl) || set(tl, foreverCache(tl));
-          };
-        }
-    } else {
-      isNoOp$1 = true;
-    }
-
-    return TL$1(tl);
-  };
-
-  function TL$1(tl) {
-    return isNoOp$1 ? tl : _templateLiteral$1(tl);
-  }
-
   var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
 
   try {
@@ -1984,7 +1994,7 @@ var heresy = (function (document,exports) {
         values[_key3 - 1] = arguments[_key3];
       }
 
-      var template = TL$1(tpl);
+      var template = TL(tpl);
       var local = wm.get(template) || setParsed(wm, template, self[secret]);
       return render(self, function () {
         return type.apply(void 0, [local].concat(values));
@@ -2036,7 +2046,7 @@ var heresy = (function (document,exports) {
     this.dispatchEvent(evt('disconnected'));
   }
 
-  var create$1 = Object.create,
+  var create = Object.create,
       defineProperty = Object.defineProperty,
       defineProperties$1 = Object.defineProperties,
       getOwnPropertyNames = Object.getOwnPropertyNames,
@@ -2080,8 +2090,8 @@ var heresy = (function (document,exports) {
   };
 
   var grabInfo = function grabInfo(object) {
-    var statics = create$1(null);
-    var prototype = create$1(null);
+    var statics = create(null);
+    var prototype = create(null);
     var info = {
       prototype: prototype,
       statics: statics
