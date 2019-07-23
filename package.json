@@ -42,5 +42,13 @@
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-terser": "^4.0.4",
     "uglify-es": "^3.3.9"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WebReflection/heresy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WebReflection/heresy/issues"
+  },
+  "homepage": "https://github.com/WebReflection/heresy#readme"
 }
