@@ -14,6 +14,10 @@
     "rollup": "rollup --config rollup.config.js && drop-babel-typeof index.js",
     "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c9 min.js | wc -c;cat es.js | wc -c;gzip -c9 es.js | wc -c"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WebReflection/heresy.git"
+  },
   "keywords": [
     "custom",
     "elements",
@@ -22,6 +26,9 @@
   ],
   "author": "Andrea Giammarchi",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WebReflection/heresy/issues"
+  },
   "dependencies": {
     "@ungap/event": "^0.1.4",
     "@ungap/template-literal": "^0.4.0",
