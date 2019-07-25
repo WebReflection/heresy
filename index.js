@@ -345,6 +345,11 @@ var heresy = (function (document,exports) {
 
           return had;
         },
+        forEach: function forEach(callback, context) {
+          k.forEach(function (key, i) {
+            callback.call(context, v[i], key, this);
+          }, this);
+        },
         get: function get(key) {
           return contains(key) ? v[i] : void 0;
         },
