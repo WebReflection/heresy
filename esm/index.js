@@ -82,7 +82,7 @@ const grabInfo = object => {
 };
 
 const injectStyle = cssText => {
-  if (cssText.length) {
+  if ((cssText || '').length) {
     const style = document.createElement('style');
     style.type = 'text/css';
     if (style.styleSheet)

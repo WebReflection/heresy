@@ -2127,7 +2127,7 @@ var heresy = (function (document,exports) {
   };
 
   var injectStyle = function injectStyle(cssText) {
-    if (cssText.length) {
+    if ((cssText || '').length) {
       var style = document.createElement('style');
       style.type = 'text/css';
       if (style.styleSheet) style.styleSheet.cssText = cssText;else style.appendChild(document.createTextNode(cssText));
