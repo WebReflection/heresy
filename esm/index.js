@@ -104,7 +104,7 @@ const register = ($, definition, uid) => {
     throw 'Invalid name';
 
   const {$1: name, $3: asTag, $4: asColon} = RegExp;
-  const tagName = asTag || asColon || definition.tagName || definition.extends;
+  const tagName = asTag || asColon || definition.tagName || definition.extends || "element";
 
   if (!/^[A-Za-z0-9:._-]+$/.test(tagName))
     throw 'Invalid tag';

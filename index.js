@@ -2151,7 +2151,7 @@ var heresy = (function (document,exports) {
     var name = RegExp.$1,
         asTag = RegExp.$3,
         asColon = RegExp.$4;
-    var tagName = asTag || asColon || definition.tagName || definition["extends"];
+    var tagName = asTag || asColon || definition.tagName || definition["extends"] || "element";
     if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
     var is = hyphenizer(name) + uid + '-heresy';
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");

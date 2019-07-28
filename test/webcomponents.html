@@ -9,8 +9,7 @@
   <script>
   this.onload = () => {
     const { define, render, html } = heresy;
-    define("Custom", {
-      extends: "element",
+    const definition = {
       style: comp => `
         ${comp} > button {
           font-size:200%;
@@ -23,7 +22,9 @@
       render() {
         this.html`<button>Hello ${this.name}!</button>`;
       }
-    });
+    };
+    define("Custom", definition);
+    define("CustomElement", { ...definition,  extends: "element" })
 
     render(
       document.body.lastElementChild,
@@ -34,7 +35,7 @@
 </head>
 <body>
     <div><custom-heresy name="first"></custom-heresy></div>
-    <div><custom-heresy></custom-heresy></div>
+    <div><custom-element-heresy></custom-element-heresy></div>
   <div></div>
 </body>
 </html>
