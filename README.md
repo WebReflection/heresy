@@ -4,7 +4,7 @@ Be the DOM.
 - - -
 <sup>**Social Media Photo by [Robert Lukeman](https://unsplash.com/@robertlukeman) on [Unsplash](https://unsplash.com/)**</sup>
 
-![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
+![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC) [![Greenkeeper badge](https://badges.greenkeeper.io/WebReflection/heresy.svg)](https://greenkeeper.io/)
 
 React-like Custom Elements via the V1 API built-in extends. **[Also available for SSR](https://github.com/WebReflection/heresy-ssr#readme).**
 
