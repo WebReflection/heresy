@@ -9,7 +9,7 @@
   <script>
   this.onload = () => {
     const { define, render, html } = heresy;
-    define("Custom", {
+    const definition = {
       extends: "element",
       style: comp => `
         ${comp} > button {
@@ -23,18 +23,21 @@
       render() {
         this.html`<button>Hello ${this.name}!</button>`;
       }
-    });
+    };
+    define("Custom", definition);
+    define("CustomTag", definition);
+    define("Customelement", { ...definition, elementName: "custom-element" });
 
     render(
       document.body.lastElementChild,
-      html`<Custom name=${'second'}/>`
+      html`<Customelement name=${'second'}/>`
     );
   };
   </script>
 </head>
 <body>
     <div><custom-heresy name="first"></custom-heresy></div>
-    <div><custom-heresy></custom-heresy></div>
+    <div><custom-tag></custom-tag></div>
   <div></div>
 </body>
 </html>

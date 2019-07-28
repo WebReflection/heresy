@@ -2153,7 +2153,9 @@ var heresy = (function (document,exports) {
         asColon = RegExp.$4;
     var tagName = asTag || asColon || definition.tagName || definition["extends"];
     if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
-    var is = hyphenizer(name) + uid + '-heresy';
+    var hypName = definition.elementName || hyphenizer(name);
+    var heresyEnd = (hypName.match(/-/g) || []).length === 0 ? "-heresy" : "";
+    var is = hypName + uid + heresyEnd;
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
     var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
     var element = tagName === 'element';

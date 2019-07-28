@@ -109,7 +109,9 @@ const register = ($, definition, uid) => {
   if (!/^[A-Za-z0-9:._-]+$/.test(tagName))
     throw 'Invalid tag';
 
-  const is = hyphenized(name) + uid + '-heresy';
+  const hypName = definition.elementName || hyphenized(name);
+  const heresyEnd = (hypName.match(/-/g) || []).length === 0 ? "-heresy" : "";
+  const is = hypName + uid + heresyEnd;
 
   if (customElements.get(is))
     throw `Duplicated ${is} definition`;
