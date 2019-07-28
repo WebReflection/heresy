@@ -106,12 +106,27 @@ const register = ($, definition, uid) => {
     throw 'Invalid name';
 
   const {$1: name, $3: asTag, $4: asColon} = RegExp;
-  const tagName = asTag || asColon || definition.tagName || definition.extends;
+  let tagName = asTag ||
+                asColon ||
+                definition.tagName ||
+                definition.extends ||
+                "element";
 
   if (!/^[A-Za-z0-9:._-]+$/.test(tagName))
     throw 'Invalid tag';
 
-  const is = hyphenized(name) + uid + '-heresy';
+  let hyphenizedName = '';
+  let suffix = '';
+  if (tagName.indexOf('-') < 0) {
+    hyphenizedName = hyphenized(name) + uid;
+    if (hyphenizedName.indexOf('-') < 0)
+      suffix = '-heresy';
+  }
+  else {
+    hyphenizedName = tagName + uid;
+    tagName = 'element';
+  }
+  const is = hyphenizedName + suffix;
 
   if (customElements.get(is))
     throw `Duplicated ${is} definition`;
@@ -134,7 +149,7 @@ const register = ($, definition, uid) => {
   // for some reason the class must be fully defined upfront
   // or components upgraded from the DOM won't have all details
   if (uid === '') {
-    const id = hash(is.slice(0, -7).toUpperCase());
+    const id = hash(hyphenizedName.toUpperCase());
     registry.map[name] = setupIncludes(Class, tagName, is, {id, i: 0});
     registry.re = regExp(keys(registry.map));
   }

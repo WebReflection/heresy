@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>webcomponents.dev example</title>
   <script>if(this.customElements)try{customElements.define('built-in',document.createElement('p').constructor,{'extends':'p'})}catch(a){document.write('<script src="3rd/ceb.js"><'+'/script>')}else document.write('<script src="3rd/dre.js"><'+'/script>');</script>
-  <script defer src="../min.js"></script>
+  <script defer src="../index.js"></script>
   <script>
   this.onload = () => {
     const { define, render, html } = heresy;
     define("Custom", {
-      extends: "element",
       style: comp => `
         ${comp} > button {
           font-size:200%;
@@ -25,16 +24,34 @@
       }
     });
 
+    const common = {
+      style: comp => `${comp} { display: block; }`,
+      render() {
+        this.html`${this.nodeName}`;
+      }
+    };
+
+    define("CustomTag", common);
+
+    define("Other<another-tag>", common);
+
     render(
-      document.body.lastElementChild,
-      html`<Custom name=${'second'}/>`
+      document.querySelector('#third'),
+      html`
+        <Custom name=${'third'}/>
+        <CustomTag />
+        <Other />
+      `
     );
+
   };
   </script>
 </head>
 <body>
     <div><custom-heresy name="first"></custom-heresy></div>
     <div><custom-heresy></custom-heresy></div>
-  <div></div>
+    <div id="third"></div>
+    <div><custom-tag></custom-tag></div>
+    <div><another-tag></another-tag></div>
 </body>
 </html>

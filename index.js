@@ -2151,9 +2151,20 @@ var heresy = (function (document,exports) {
     var name = RegExp.$1,
         asTag = RegExp.$3,
         asColon = RegExp.$4;
-    var tagName = asTag || asColon || definition.tagName || definition["extends"];
+    var tagName = asTag || asColon || definition.tagName || definition["extends"] || "element";
     if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
-    var is = hyphenizer(name) + uid + '-heresy';
+    var hyphenizedName = '';
+    var suffix = '';
+
+    if (tagName.indexOf('-') < 0) {
+      hyphenizedName = hyphenizer(name) + uid;
+      if (hyphenizedName.indexOf('-') < 0) suffix = '-heresy';
+    } else {
+      hyphenizedName = tagName + uid;
+      tagName = 'element';
+    }
+
+    var is = hyphenizedName + suffix;
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
     var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
     var element = tagName === 'element';
@@ -2172,7 +2183,7 @@ var heresy = (function (document,exports) {
     // or components upgraded from the DOM won't have all details
 
     if (uid === '') {
-      var id = hash(is.slice(0, -7).toUpperCase());
+      var id = hash(hyphenizedName.toUpperCase());
       registry.map[name] = setupIncludes(Class, tagName, is, {
         id: id,
         i: 0
