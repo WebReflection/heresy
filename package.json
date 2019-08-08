@@ -47,6 +47,14 @@
     "type": "git",
     "url": "git+https://github.com/WebReflection/heresy.git"
   },
+  "greenkeeper": {
+    "ignore": [
+      "uglify-js",
+      "rollup",
+      "rollup-plugin-babel",
+      "rollup-plugin-node-resolve"
+    ]
+  },
   "bugs": {
     "url": "https://github.com/WebReflection/heresy/issues"
   },
