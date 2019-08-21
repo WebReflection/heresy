@@ -151,6 +151,73 @@ var heresy = (function (document,exports) {
     return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
   }
 
+  /*! (c) Andrea Giammarchi - ISC */
+  var self$1 = null ||
+  /* istanbul ignore next */
+  {};
+
+  try {
+    self$1.Event = new Event('.').constructor;
+  } catch (Event) {
+    try {
+      self$1.Event = new CustomEvent('.').constructor;
+    } catch (Event) {
+      self$1.Event = function Event(type, init) {
+        if (!init) init = {};
+        var e = document.createEvent('Event');
+        var bubbles = !!init.bubbles;
+        var cancelable = !!init.cancelable;
+        e.initEvent(type, bubbles, cancelable);
+
+        try {
+          e.bubbles = bubbles;
+          e.cancelable = cancelable;
+        } catch (e) {}
+
+        return e;
+      };
+    }
+  }
+
+  var Event$1 = self$1.Event;
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var self$2 = null ||
+  /* istanbul ignore next */
+  {};
+
+  try {
+    self$2.WeakSet = WeakSet;
+  } catch (WeakSet) {
+    // requires a global WeakMap (IE11+)
+    (function (WeakMap) {
+      var all = new WeakMap();
+      var proto = WeakSet.prototype;
+
+      proto.add = function (value) {
+        return all.get(this).set(value, 1), this;
+      };
+
+      proto["delete"] = function (value) {
+        return all.get(this)["delete"](value);
+      };
+
+      proto.has = function (value) {
+        return all.get(this).has(value);
+      };
+
+      self$2.WeakSet = WeakSet;
+
+      function WeakSet(iterable) {
+
+        all.set(this, new WeakMap());
+        if (iterable) iterable.forEach(this.add, this);
+      }
+    })(WeakMap);
+  }
+
+  var WeakSet$1 = self$2.WeakSet;
+
   var isNoOp = false;
 
   var _templateLiteral = function templateLiteral(tl) {
@@ -266,6 +333,12 @@ var heresy = (function (document,exports) {
 
   var isArray = Array.isArray;
   var wireType = Wire.prototype.nodeType;
+  Object.freeze(Hole);
+
+  function Hole(type, args) {
+    this.type = type;
+    this.args = args;
+  }
 
   /*! (c) Andrea Giammarchi - ISC */
   var createContent = function (document) {
@@ -323,14 +396,14 @@ var heresy = (function (document,exports) {
   }(document);
 
   /*! (c) Andrea Giammarchi - ISC */
-  var self$1 = null ||
+  var self$3 = null ||
   /* istanbul ignore next */
   {};
 
   try {
-    self$1.Map = Map;
+    self$3.Map = Map;
   } catch (Map) {
-    self$1.Map = function Map() {
+    self$3.Map = function Map() {
       var i = 0;
       var k = [];
       var v = [];
@@ -369,7 +442,7 @@ var heresy = (function (document,exports) {
     };
   }
 
-  var Map$1 = self$1.Map;
+  var Map$1 = self$3.Map;
 
   var append = function append(get, parent, children, start, end, before) {
     var isSelect = 'selectedIndex' in parent;
@@ -1473,32 +1546,55 @@ var heresy = (function (document,exports) {
     return callback(this);
   }
 
+  var create = Object.create,
+      keys = Object.keys;
   var wm = new WeakMap$1();
   var container = new WeakMap$1();
-  var current = null; // can be used with any useRef hook
+  var dtPrototype = Tagger.prototype;
+  var current = null;
 
-  function render(node, callback) {
-    var value = update.call(this, node, callback);
+  var lighterhtml = function lighterhtml(Tagger) {
+    var html = outer('html', Tagger);
+    var svg = outer('svg', Tagger);
+    return {
+      html: html,
+      svg: svg,
+      hook: function hook(useRef) {
+        return {
+          html: createHook(useRef, html),
+          svg: createHook(useRef, svg)
+        };
+      },
+      render: function render(node, callback) {
+        var value = update.call(this, node, callback, Tagger);
 
-    if (container.get(node) !== value) {
-      container.set(node, value);
-      appendClean(node, value);
+        if (container.get(node) !== value) {
+          container.set(node, value);
+          appendClean(node, value);
+        }
+
+        return node;
+      }
+    };
+  };
+
+  var custom = function custom(overrides) {
+    var prototype = create(dtPrototype);
+    keys(overrides).forEach(function (key) {
+      // assign the method after passing along the previous one
+      // falling back to String for the transform case to have API
+      // consistency
+      prototype[key] = overrides[key](prototype[key]) || String;
+    });
+    Tagger$1.prototype = prototype;
+    return lighterhtml(Tagger$1);
+
+    function Tagger$1() {
+      return Tagger.apply(this, arguments);
     }
+  };
 
-    return node;
-  } // keyed render via render(node, () => html`...`)
-  // non keyed renders in the wild via html`...`
-
-  var html = outer('html');
-  var svg = outer('svg'); // an indirect exposure of a domtagger capability
-  // usable to transform once per template any layout
-
-  var transform = function transform(callback) {
-    var transform = Tagger.prototype.transform;
-    Tagger.prototype.transform = transform ? function (markup) {
-      return callback(transform(markup));
-    } : callback;
-  }; // - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  var _lighterhtml = lighterhtml(Tagger);
 
   function appendClean(node, fragment) {
     node.textContent = '';
@@ -1509,7 +1605,15 @@ var heresy = (function (document,exports) {
     return result.nodeType === wireType ? result.valueOf(forceFragment) : result;
   }
 
-  function outer(type) {
+  function createHook(useRef, view) {
+    return function () {
+      var ref = useRef(null);
+      if (ref.current === null) ref.current = view["for"](ref);
+      return asNode$1(ref.current.apply(null, arguments), false);
+    };
+  }
+
+  function outer(type, Tagger) {
     var wm = new WeakMap$1();
 
     tag["for"] = function (identity, id) {
@@ -1526,12 +1630,12 @@ var heresy = (function (document,exports) {
       var tagger = new Tagger(type);
 
       var callback = function callback() {
-        return tagger.apply(null, unrollArray(args, 1, 1));
+        return tagger.apply(null, unrollArray(args, 1, 1, Tagger));
       };
 
       return ref[id] = function () {
         args = tta.apply(null, arguments);
-        var result = update(tagger, callback);
+        var result = update(tagger, callback, Tagger);
         return wire || (wire = wiredContent(result));
       };
     }
@@ -1561,7 +1665,7 @@ var heresy = (function (document,exports) {
     return info;
   }
 
-  function update(reference, callback) {
+  function update(reference, callback, Tagger) {
     var prev = current;
     current = wm.get(reference) || set(reference);
     current.i = 0;
@@ -1569,7 +1673,7 @@ var heresy = (function (document,exports) {
     var value;
 
     if (ret instanceof Hole) {
-      value = asNode$1(unroll(ret, 0), current.update);
+      value = asNode$1(unroll(ret, 0, Tagger), current.update);
       var _current = current,
           i = _current.i,
           length = _current.length,
@@ -1585,7 +1689,7 @@ var heresy = (function (document,exports) {
     return value;
   }
 
-  function unroll(hole, level) {
+  function unroll(hole, level, Tagger) {
     var _current2 = current,
         i = _current2.i,
         length = _current2.length,
@@ -1601,7 +1705,7 @@ var heresy = (function (document,exports) {
       tpl: args[0],
       wire: null
     });
-    unrollArray(args, 1, level + 1);
+    unrollArray(args, 1, level + 1, Tagger);
     var info = stack[i];
 
     if (stacked) {
@@ -1629,15 +1733,15 @@ var heresy = (function (document,exports) {
     return wire;
   }
 
-  function unrollArray(arr, i, level) {
+  function unrollArray(arr, i, level, Tagger) {
     for (var length = arr.length; i < length; i++) {
       var value = arr[i];
 
       if (typeof(value) === 'object' && value) {
         if (value instanceof Hole) {
-          arr[i] = unroll(value, level - 1);
+          arr[i] = unroll(value, level - 1, Tagger);
         } else if (isArray(value)) {
-          arr[i] = unrollArray(value, 0, level++);
+          arr[i] = unrollArray(value, 0, level++, Tagger);
         }
       }
     }
@@ -1650,79 +1754,6 @@ var heresy = (function (document,exports) {
     var length = childNodes.length;
     return length === 1 ? childNodes[0] : length ? new Wire(childNodes) : node;
   }
-
-  Object.freeze(Hole);
-  function Hole(type, args) {
-    this.type = type;
-    this.args = args;
-  }
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var self$2 = null ||
-  /* istanbul ignore next */
-  {};
-
-  try {
-    self$2.Event = new Event('.').constructor;
-  } catch (Event) {
-    try {
-      self$2.Event = new CustomEvent('.').constructor;
-    } catch (Event) {
-      self$2.Event = function Event(type, init) {
-        if (!init) init = {};
-        var e = document.createEvent('Event');
-        var bubbles = !!init.bubbles;
-        var cancelable = !!init.cancelable;
-        e.initEvent(type, bubbles, cancelable);
-
-        try {
-          e.bubbles = bubbles;
-          e.cancelable = cancelable;
-        } catch (e) {}
-
-        return e;
-      };
-    }
-  }
-
-  var Event$1 = self$2.Event;
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var self$3 = null ||
-  /* istanbul ignore next */
-  {};
-
-  try {
-    self$3.WeakSet = WeakSet;
-  } catch (WeakSet) {
-    // requires a global WeakMap (IE11+)
-    (function (WeakMap) {
-      var all = new WeakMap();
-      var proto = WeakSet.prototype;
-
-      proto.add = function (value) {
-        return all.get(this).set(value, 1), this;
-      };
-
-      proto["delete"] = function (value) {
-        return all.get(this)["delete"](value);
-      };
-
-      proto.has = function (value) {
-        return all.get(this).has(value);
-      };
-
-      self$3.WeakSet = WeakSet;
-
-      function WeakSet(iterable) {
-
-        all.set(this, new WeakMap());
-        if (iterable) iterable.forEach(this.add, this);
-      }
-    })(WeakMap);
-  }
-
-  var WeakSet$1 = self$3.WeakSet;
 
   var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
 
@@ -1829,6 +1860,17 @@ var heresy = (function (document,exports) {
   var setInfo = function setInfo(info) {
     tmp = info;
   };
+
+  var _custom = custom({
+    transform: function transform($) {
+      return function (markup) {
+        return replace(markup, registry);
+      };
+    }
+  }),
+      lighterRender = _custom.render,
+      lighterHTML = _custom.html,
+      lighterSVG = _custom.svg;
 
   var secret = "_\uD83D\uDD25";
   var defineProperties = Object.defineProperties;
@@ -1954,7 +1996,7 @@ var heresy = (function (document,exports) {
     return new Event$1(type);
   };
 
-  var html$1 = function html() {
+  var html = function html() {
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
@@ -1962,9 +2004,9 @@ var heresy = (function (document,exports) {
     return new Hole('html', args);
   };
 
-  html$1["for"] = html["for"];
+  html["for"] = lighterHTML["for"];
 
-  var svg$1 = function svg() {
+  var svg = function svg() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
     }
@@ -1972,10 +2014,10 @@ var heresy = (function (document,exports) {
     return new Hole('svg', args);
   };
 
-  svg$1["for"] = svg["for"];
+  svg["for"] = lighterSVG["for"];
 
-  var render$1 = function render$1(where, what) {
-    return render(where, typeof what === 'function' ? what : function () {
+  var render = function render(where, what) {
+    return lighterRender(where, typeof what === 'function' ? what : function () {
       return what;
     });
   };
@@ -2001,7 +2043,7 @@ var heresy = (function (document,exports) {
 
       var template = TL(tpl);
       var local = wm.get(template) || setParsed(wm, template, self[secret]);
-      return render(self, function () {
+      return lighterRender(self, function () {
         return type.apply(void 0, [local].concat(values));
       });
     };
@@ -2012,11 +2054,11 @@ var heresy = (function (document,exports) {
   }
 
   function getHTML() {
-    return $html.get(this) || setWrap(this, html$1, $html);
+    return $html.get(this) || setWrap(this, html, $html);
   }
 
   function getSVG() {
-    return $svg.get(this) || setWrap(this, svg$1, $svg);
+    return $svg.get(this) || setWrap(this, svg, $svg);
   }
 
   function handleEvent(event) {
@@ -2051,13 +2093,13 @@ var heresy = (function (document,exports) {
     this.dispatchEvent(evt('disconnected'));
   }
 
-  var create = Object.create,
+  var create$1 = Object.create,
       defineProperty = Object.defineProperty,
       defineProperties$1 = Object.defineProperties,
       getOwnPropertyNames = Object.getOwnPropertyNames,
       getOwnPropertySymbols = Object.getOwnPropertySymbols,
       getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
-      keys = Object.keys;
+      keys$1 = Object.keys;
   var HTML = {
     element: HTMLElement
   };
@@ -2095,8 +2137,8 @@ var heresy = (function (document,exports) {
   };
 
   var grabInfo = function grabInfo(object) {
-    var statics = create(null);
-    var prototype = create(null);
+    var statics = create$1(null);
+    var prototype = create$1(null);
     var info = {
       prototype: prototype,
       statics: statics
@@ -2188,7 +2230,7 @@ var heresy = (function (document,exports) {
         id: id,
         i: 0
       });
-      registry.re = regExp(keys(registry.map));
+      registry.re = regExp(keys$1(registry.map));
     }
 
     var args = [is, Class];
@@ -2214,7 +2256,7 @@ var heresy = (function (document,exports) {
 
     if (includes) {
       var map = {};
-      keys(includes).forEach(function ($) {
+      keys$1(includes).forEach(function ($) {
         var uid = "-".concat(u.id, "-").concat(u.i++);
 
         var _register = register($, includes[$], uid),
@@ -2225,7 +2267,7 @@ var heresy = (function (document,exports) {
 
         styles.push(selector(map[name] = setupIncludes(Class, tagName, is, u)));
       });
-      var re = regExp(keys(map));
+      var re = regExp(keys$1(map));
       var events = prototype[secret].events;
       var value = {
         events: events,
@@ -2259,15 +2301,11 @@ var heresy = (function (document,exports) {
     return details;
   };
 
-  transform(function (markup) {
-    return replace(markup, registry);
-  });
-
   exports.define = define;
-  exports.html = html$1;
+  exports.html = html;
   exports.ref = ref;
-  exports.render = render$1;
-  exports.svg = svg$1;
+  exports.render = render;
+  exports.svg = svg;
 
   return exports;
 
