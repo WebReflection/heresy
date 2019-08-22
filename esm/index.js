@@ -1,13 +1,11 @@
 import WeakMap from '@ungap/weakmap';
 import hyphenized from 'hyphenizer';
-import {transform} from 'lighterhtml';
 
 import {augmented, render, secret, html, svg} from './augmented.js';
 import {
   extend,
   hash,
   registry,
-  replace,
   regExp,
   selector,
   getInfo, setInfo
@@ -197,8 +195,6 @@ const setupIncludes = (Class, tagName, is, u) => {
     injectStyle(Class.style(...styles));
   return details;
 };
-
-transform(markup => replace(markup, registry));
 
 export {
   // specialized for both client and SSR, not needed within components

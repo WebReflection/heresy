@@ -4,14 +4,17 @@ const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* i
 const WeakSet = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakset'));
 const tl = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/template-literal'));
 
+const {Hole, custom} = require('lighterhtml');
+
+const {registry, replace} = require('./utils.js');
+
 const {
-  Hole,
   render: lighterRender,
   html: lighterHTML,
   svg: lighterSVG
-} = require('lighterhtml');
-
-const {replace} = require('./utils.js');
+} = custom({
+  transform: $ => markup => replace(markup, registry)
+});
 
 const secret = '_\uD83D\uDD25';
 

@@ -3,14 +3,17 @@ import WeakMap from '@ungap/weakmap';
 import WeakSet from '@ungap/weakset';
 import tl from '@ungap/template-literal';
 
-import {
-  Hole,
-  render as lighterRender,
-  html as lighterHTML,
-  svg as lighterSVG
-} from 'lighterhtml';
+import {Hole, custom} from 'lighterhtml';
 
-import {replace} from './utils.js';
+import {registry, replace} from './utils.js';
+
+const {
+  render: lighterRender,
+  html: lighterHTML,
+  svg: lighterSVG
+} = custom({
+  transform: $ => markup => replace(markup, registry)
+});
 
 const secret = '_\uD83D\uDD25';
 

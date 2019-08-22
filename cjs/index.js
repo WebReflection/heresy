@@ -1,14 +1,12 @@
 'use strict';
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
-const {transform} = require('lighterhtml');
 
 const {augmented, render, secret, html, svg} = require('./augmented.js');
 const {
   extend,
   hash,
   registry,
-  replace,
   regExp,
   selector,
   getInfo,
@@ -199,8 +197,6 @@ const setupIncludes = (Class, tagName, is, u) => {
     injectStyle(Class.style(...styles));
   return details;
 };
-
-transform(markup => replace(markup, registry));
 
 exports.define = define;
 exports.render = render;
