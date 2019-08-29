@@ -1077,7 +1077,7 @@ var heresy = (function (document,exports) {
   var referenced = new WeakMap$1();
 
   function createInfo(options, template) {
-    var markup = (options.sanitize || domsanitizer)(template);
+    var markup = (options.convert || domsanitizer)(template);
     var transform = options.transform;
     if (transform) markup = transform(markup);
     var content = createContent(markup, options.type);
@@ -1587,10 +1587,10 @@ var heresy = (function (document,exports) {
     var prototype = create(dtPrototype);
     keys(overrides).forEach(function (key) {
       // assign the method after passing along the previous one
-      // `sanitize` exposes the original domsanitizer while
+      // `convert` exposes the original domsanitizer while
       // all other unknown methods, including `transform`,
       // fallbacks to generic String
-      prototype[key] = overrides[key](prototype[key] || (key === 'sanitize' ? domsanitizer : String));
+      prototype[key] = overrides[key](prototype[key] || (key === 'convert' ? domsanitizer : String));
     });
     Tagger$1.prototype = prototype;
     return lighterhtml(Tagger$1);
