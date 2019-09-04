@@ -28,7 +28,7 @@
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^1.0.5"
+    "lighterhtml": "^1.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.4.4",
