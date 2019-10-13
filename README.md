@@ -6,7 +6,7 @@ Be the DOM.
 
 ![WebReflection status](https://offline.report/status/webreflection.svg) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC) [![Build Status](https://travis-ci.com/WebReflection/heresy.svg?branch=master)](https://travis-ci.com/WebReflection/heresy) [![Greenkeeper badge](https://badges.greenkeeper.io/WebReflection/heresy.svg)](https://greenkeeper.io/)
 
-React-like Custom Elements via the V1 API built-in extends. **[Also available for SSR](https://github.com/WebReflection/heresy-ssr#readme).**
+![heresy logo](heresy.svg) React-like Custom Elements via the V1 API built-in extends. **[Also available for SSR](https://github.com/WebReflection/heresy-ssr#readme).**
 
 - - -
 
