@@ -28,15 +28,15 @@
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^1.2.1"
+    "lighterhtml": "^1.2.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.6.2",
-    "@babel/preset-env": "^7.6.2",
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
     "@ungap/degap": "^0.1.4",
     "ascjs": "^3.0.1",
     "drop-babel-typeof": "^1.0.3",
-    "rollup": "^1.21.4",
+    "rollup": "^1.24.0",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-includepaths": "^0.2.3",
     "rollup-plugin-node-resolve": "^5.2.0",
