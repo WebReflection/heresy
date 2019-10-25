@@ -1,6 +1,5 @@
 # ![heresy logo](heresy.png) heresy
-Don't wrap the DOM.
-Be the DOM.
+Don't simulate the DOM. Be the DOM.
 - - -
 <sup>**Social Media Photo by [Robert Lukeman](https://unsplash.com/@robertlukeman) on [Unsplash](https://unsplash.com/)**</sup>
 
