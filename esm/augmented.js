@@ -21,6 +21,7 @@ const {defineProperties} = Object;
 
 const $html = new WeakMap;
 const $svg = new WeakMap;
+const $mappedAttributes = new WeakMap;
 const ws = new WeakSet;
 
 const configurable = true;
@@ -158,6 +159,36 @@ const augmented = Class => {
       };
   });
 
+  const mappedAttributes = Class.mappedAttributes || [];
+  mappedAttributes.forEach(name => {
+    if (!(name in prototype)) {
+      const _ = new WeakMap;
+      const listening = ('on' + name) in prototype;
+      if (listening)
+        events.push(name);
+      properties[name] = {
+        configurable,
+        get() { return _.get(this); },
+        set(detail) {
+          if (_.has(this) && _.get(this) === detail)
+            return;
+          _.set(this, detail);
+          if (listening) {
+            const e = evt(name);
+            e.detail = detail;
+            if (ws.has(this))
+              this.dispatchEvent(e);
+            else {
+              if (!$mappedAttributes.has(this))
+                $mappedAttributes.set(this, []);
+              $mappedAttributes.get(this).push(e);
+            }
+          }
+        }
+      };
+    }
+  });
+
   defineProperties(prototype, properties);
 
   const attributes = booleanAttributes.concat(observedAttributes);
@@ -217,6 +248,10 @@ function addListener(type) {
   this.addEventListener(type, this);
 }
 
+function dispatchEvent(event) {
+  this.dispatchEvent(event);
+}
+
 function getHTML() {
   return $html.get(this) || setWrap(this, html, $html);
 }
@@ -234,6 +269,11 @@ function init() {
     ws.add(this);
     this[secret].events.forEach(addListener, this);
     this.dispatchEvent(evt('init'));
+    const events = $mappedAttributes.get(this);
+    if (events) {
+      $mappedAttributes.delete(this);
+      events.forEach(dispatchEvent, this);
+    }
   }
 }
 

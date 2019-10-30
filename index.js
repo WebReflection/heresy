@@ -1914,6 +1914,7 @@ var heresy = (function (document,exports) {
   var defineProperties = Object.defineProperties;
   var $html = new WeakMap$1();
   var $svg = new WeakMap$1();
+  var $mappedAttributes = new WeakMap$1();
   var ws = new WeakSet$1();
   var configurable = true;
   var attributeChangedCallback = 'attributeChangedCallback';
@@ -2018,6 +2019,35 @@ var heresy = (function (document,exports) {
         }
       };
     });
+    var mappedAttributes = Class.mappedAttributes || [];
+    mappedAttributes.forEach(function (name) {
+      if (!(name in prototype)) {
+        var _ = new WeakMap$1();
+
+        var listening = 'on' + name in prototype;
+        if (listening) events.push(name);
+        properties[name] = {
+          configurable: configurable,
+          get: function get() {
+            return _.get(this);
+          },
+          set: function set(detail) {
+            if (_.has(this) && _.get(this) === detail) return;
+
+            _.set(this, detail);
+
+            if (listening) {
+              var e = evt(name);
+              e.detail = detail;
+              if (ws.has(this)) this.dispatchEvent(e);else {
+                if (!$mappedAttributes.has(this)) $mappedAttributes.set(this, []);
+                $mappedAttributes.get(this).push(e);
+              }
+            }
+          }
+        };
+      }
+    });
     defineProperties(prototype, properties);
     var attributes = booleanAttributes.concat(observedAttributes);
     return attributes.length ? defineProperties(Class, {
@@ -2091,6 +2121,10 @@ var heresy = (function (document,exports) {
     this.addEventListener(type, this);
   }
 
+  function dispatchEvent(event) {
+    this.dispatchEvent(event);
+  }
+
   function getHTML() {
     return $html.get(this) || setWrap(this, html, $html);
   }
@@ -2108,6 +2142,12 @@ var heresy = (function (document,exports) {
       ws.add(this);
       this[secret].events.forEach(addListener, this);
       this.dispatchEvent(evt('init'));
+      var events = $mappedAttributes.get(this);
+
+      if (events) {
+        $mappedAttributes["delete"](this);
+        events.forEach(dispatchEvent, this);
+      }
     }
   }
 
@@ -2193,6 +2233,7 @@ var heresy = (function (document,exports) {
         case 'includes':
         case 'name':
         case 'booleanAttributes':
+        case 'mappedAttributes':
         case 'observedAttributes':
         case 'style':
         case 'tagName':
