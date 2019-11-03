@@ -1396,7 +1396,11 @@ var heresy = (function (document,exports) {
 
   var hyperSetter = function hyperSetter(node, name, svg) {
     return svg ? function (value) {
-      node.setAttribute(name, value);
+      try {
+        node[name] = value;
+      } catch (nope) {
+        node.setAttribute(name, value);
+      }
     } : function (value) {
       node[name] = value;
     };
