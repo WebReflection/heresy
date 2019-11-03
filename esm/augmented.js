@@ -161,32 +161,30 @@ const augmented = Class => {
 
   const mappedAttributes = Class.mappedAttributes || [];
   mappedAttributes.forEach(name => {
-    if (!(name in prototype)) {
-      const _ = new WeakMap;
-      const listening = ('on' + name) in prototype;
-      if (listening)
-        events.push(name);
-      properties[name] = {
-        configurable,
-        get() { return _.get(this); },
-        set(detail) {
-          if (_.has(this) && _.get(this) === detail)
-            return;
-          _.set(this, detail);
-          if (listening) {
-            const e = evt(name);
-            e.detail = detail;
-            if (ws.has(this))
-              this.dispatchEvent(e);
-            else {
-              if (!$mappedAttributes.has(this))
-                $mappedAttributes.set(this, []);
-              $mappedAttributes.get(this).push(e);
-            }
+    const _ = new WeakMap;
+    const listening = ('on' + name) in prototype;
+    if (listening)
+      events.push(name);
+    properties[name] = {
+      configurable,
+      get() { return _.get(this); },
+      set(detail) {
+        if (_.has(this) && _.get(this) === detail)
+          return;
+        _.set(this, detail);
+        if (listening) {
+          const e = evt(name);
+          e.detail = detail;
+          if (ws.has(this))
+            this.dispatchEvent(e);
+          else {
+            if (!$mappedAttributes.has(this))
+              $mappedAttributes.set(this, []);
+            $mappedAttributes.get(this).push(e);
           }
         }
-      };
-    }
+      }
+    };
   });
 
   defineProperties(prototype, properties);

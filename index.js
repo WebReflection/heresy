@@ -2021,32 +2021,30 @@ var heresy = (function (document,exports) {
     });
     var mappedAttributes = Class.mappedAttributes || [];
     mappedAttributes.forEach(function (name) {
-      if (!(name in prototype)) {
-        var _ = new WeakMap$1();
+      var _ = new WeakMap$1();
 
-        var listening = 'on' + name in prototype;
-        if (listening) events.push(name);
-        properties[name] = {
-          configurable: configurable,
-          get: function get() {
-            return _.get(this);
-          },
-          set: function set(detail) {
-            if (_.has(this) && _.get(this) === detail) return;
+      var listening = 'on' + name in prototype;
+      if (listening) events.push(name);
+      properties[name] = {
+        configurable: configurable,
+        get: function get() {
+          return _.get(this);
+        },
+        set: function set(detail) {
+          if (_.has(this) && _.get(this) === detail) return;
 
-            _.set(this, detail);
+          _.set(this, detail);
 
-            if (listening) {
-              var e = evt(name);
-              e.detail = detail;
-              if (ws.has(this)) this.dispatchEvent(e);else {
-                if (!$mappedAttributes.has(this)) $mappedAttributes.set(this, []);
-                $mappedAttributes.get(this).push(e);
-              }
+          if (listening) {
+            var e = evt(name);
+            e.detail = detail;
+            if (ws.has(this)) this.dispatchEvent(e);else {
+              if (!$mappedAttributes.has(this)) $mappedAttributes.set(this, []);
+              $mappedAttributes.get(this).push(e);
             }
           }
-        };
-      }
+        }
+      };
     });
     defineProperties(prototype, properties);
     var attributes = booleanAttributes.concat(observedAttributes);
