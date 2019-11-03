@@ -69,6 +69,7 @@ const grabInfo = object => {
       case 'includes':
       case 'name':
       case 'booleanAttributes':
+      case 'mappedAttributes':
       case 'observedAttributes':
       case 'style':
       case 'tagName':

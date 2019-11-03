@@ -197,9 +197,17 @@ class MyButton extends HTMLButtonElement {
   ondisconnected(event) {}
   onattributechanged(event = {attributeName, oldValue, newValue}) {}
 
-  // (optional) create 1:1 attribute representation as accessors
-  get observedAttributes() { return ['name', 'age']; }
+  // (optional) attributes that can either be true or false once accessed
+  // reflected on the DOM as either present, or not
   get booleanAttributes() { return ['checked']; }
+
+  // (optional) store any value directly and dispatch `on${name}` on changes
+  get mappedAttributes() { return ['data']; }
+  // if `ondata(event){}` is defined, event.detail will have the new value
+
+  // (optional) native Custom Elements behavior with changes dispatched
+  // through the onattributechanged callback
+  get observedAttributes() { return ['name', 'age']; }
 
   // (optional) populate this button content
   //            (kinda useless with void elements such img, input, ...)
