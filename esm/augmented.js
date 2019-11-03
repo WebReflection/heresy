@@ -169,8 +169,6 @@ const augmented = Class => {
       configurable,
       get() { return _.get(this); },
       set(detail) {
-        if (_.has(this) && _.get(this) === detail)
-          return;
         _.set(this, detail);
         if (listening) {
           const e = evt(name);

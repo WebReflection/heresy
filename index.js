@@ -2031,8 +2031,6 @@ var heresy = (function (document,exports) {
           return _.get(this);
         },
         set: function set(detail) {
-          if (_.has(this) && _.get(this) === detail) return;
-
           _.set(this, detail);
 
           if (listening) {
