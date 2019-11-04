@@ -45,12 +45,26 @@ const fromClass = constructor => {
   return Class;
 };
 
-const fromObject = (object, tag) => {
+const fromObject = (object, tag, isFragment) => {
   const {statics, prototype} = grabInfo(object);
   const Class = extend(
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
   );
+  if (isFragment) {
+    const {render} = prototype;
+    prototype.render = {value() {
+      if (render.value)
+        render.value.apply(this, arguments);
+      const {parentNode} = this;
+      if (parentNode) {
+        const range = document.createRange();
+        range.setStartBefore(this.firstChild);
+        range.setEndAfter(this.lastChild);
+        parentNode.replaceChild(range.extractContents(), this);
+      }
+    }};
+  }
   defineProperties(Class.prototype, prototype);
   defineProperties(Class, statics);
   oc.set(object, augmented(Class));
@@ -115,7 +129,10 @@ const register = ($, definition, uid) => {
                 definition.extends ||
                 'element';
 
-  if (!/^[A-Za-z0-9:._-]+$/.test(tagName))
+  const isFragment = tagName === 'fragment';
+  if (isFragment)
+    tagName = 'element';
+  else if (!/^[A-Za-z0-9:._-]+$/.test(tagName))
     throw 'Invalid tag';
 
   let hyphenizedName = '';
@@ -136,8 +153,8 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition, tagName)) :
-      (cc.get(definition) || fromClass(definition)),
+      (oc.get(definition) || fromObject(definition, tagName, isFragment)) :
+      (cc.get(definition) || fromClass(definition, isFragment)),
     true
   );
 

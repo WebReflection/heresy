@@ -72,7 +72,7 @@ setTimeout(() => {
     }
   };
   const Outer = {
-    extends: 'div',
+    extends: 'fragment',
     includes: {Div, MyButton},
     render() {
       this.html`<Div/><MyButton props=${{name: 'Magic'}}/>`;

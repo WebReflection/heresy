@@ -2197,12 +2197,30 @@ var heresy = (function (document,exports) {
     return Class;
   };
 
-  var fromObject = function fromObject(object, tag) {
+  var fromObject = function fromObject(object, tag, isFragment) {
     var _grabInfo = grabInfo(object),
         statics = _grabInfo.statics,
         prototype = _grabInfo.prototype;
 
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
+
+    if (isFragment) {
+      var _render = prototype.render;
+      prototype.render = {
+        value: function value() {
+          if (_render.value) _render.value.apply(this, arguments);
+          var parentNode = this.parentNode;
+
+          if (parentNode) {
+            var range = document.createRange();
+            range.setStartBefore(this.firstChild);
+            range.setEndAfter(this.lastChild);
+            parentNode.replaceChild(range.extractContents(), this);
+          }
+        }
+      };
+    }
+
     defineProperties$1(Class.prototype, prototype);
     defineProperties$1(Class, statics);
     oc.set(object, augmented(Class));
@@ -2268,7 +2286,8 @@ var heresy = (function (document,exports) {
         asTag = RegExp.$3,
         asColon = RegExp.$4;
     var tagName = asTag || asColon || definition.tagName || definition["extends"] || 'element';
-    if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
+    var isFragment = tagName === 'fragment';
+    if (isFragment) tagName = 'element';else if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
     var hyphenizedName = '';
     var suffix = '';
 
@@ -2282,7 +2301,7 @@ var heresy = (function (document,exports) {
 
     var is = hyphenizedName + suffix;
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName, isFragment) : cc.get(definition) || fromClass(definition), true);
     var element = tagName === 'element';
     defineProperty(Class, 'new', {
       value: element ? function () {
@@ -2376,14 +2395,14 @@ var heresy = (function (document,exports) {
       });
 
       if ('render' in prototype) {
-        var _render = prototype.render;
+        var _render2 = prototype.render;
         var _info = value.info;
         defineProperty(prototype, 'render', {
           value: function value() {
             var tmp = getInfo();
             setInfo(_info);
 
-            var out = _render.apply(this, arguments);
+            var out = _render2.apply(this, arguments);
 
             setInfo(tmp);
             return out;
