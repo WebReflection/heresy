@@ -2203,24 +2203,6 @@ var heresy = (function (document,exports) {
         prototype = _grabInfo.prototype;
 
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
-
-    if (isFragment) {
-      var _render = prototype.render;
-      prototype.render = {
-        value: function value() {
-          if (_render.value) _render.value.apply(this, arguments);
-          var parentNode = this.parentNode;
-
-          if (parentNode) {
-            var range = document.createRange();
-            range.setStartBefore(this.firstChild);
-            range.setEndAfter(this.lastChild);
-            parentNode.replaceChild(range.extractContents(), this);
-          }
-        }
-      };
-    }
-
     defineProperties$1(Class.prototype, prototype);
     defineProperties$1(Class, statics);
     oc.set(object, augmented(Class));
@@ -2301,7 +2283,7 @@ var heresy = (function (document,exports) {
 
     var is = hyphenizedName + suffix;
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName, isFragment) : cc.get(definition) || fromClass(definition), true);
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
     var element = tagName === 'element';
     defineProperty(Class, 'new', {
       value: element ? function () {
@@ -2324,6 +2306,23 @@ var heresy = (function (document,exports) {
         i: 0
       });
       registry.re = regExp(keys$1(registry.map));
+    }
+
+    if (isFragment) {
+      var _render = Class.prototype.render;
+      defineProperty(Class.prototype, 'render', {
+        configurable: true,
+        value: function value() {
+          if (_render) _render.apply(this, arguments);
+
+          if (this.parentNode) {
+            var range = document.createRange();
+            range.setStartBefore(this.firstChild);
+            range.setEndAfter(this.lastChild);
+            this.parentNode.replaceChild(range.extractContents(), this);
+          }
+        }
+      });
     }
 
     var args = [is, Class];
@@ -2398,6 +2397,7 @@ var heresy = (function (document,exports) {
         var _render2 = prototype.render;
         var _info = value.info;
         defineProperty(prototype, 'render', {
+          configurable: true,
           value: function value() {
             var tmp = getInfo();
             setInfo(_info);

@@ -49,20 +49,6 @@ const fromObject = (object, tag, isFragment) => {
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
     false
   );
-  if (isFragment) {
-    const {render} = prototype;
-    prototype.render = {value() {
-      if (render.value)
-        render.value.apply(this, arguments);
-      const {parentNode} = this;
-      if (parentNode) {
-        const range = document.createRange();
-        range.setStartBefore(this.firstChild);
-        range.setEndAfter(this.lastChild);
-        parentNode.replaceChild(range.extractContents(), this);
-      }
-    }};
-  }
   defineProperties(Class.prototype, prototype);
   defineProperties(Class, statics);
   oc.set(object, augmented(Class));
@@ -151,8 +137,8 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition, tagName, isFragment)) :
-      (cc.get(definition) || fromClass(definition, isFragment)),
+      (oc.get(definition) || fromObject(definition, tagName)) :
+      (cc.get(definition) || fromClass(definition)),
     true
   );
 
@@ -170,6 +156,27 @@ const register = ($, definition, uid) => {
     const id = hash(hyphenizedName.toUpperCase());
     registry.map[name] = setupIncludes(Class, tagName, is, {id, i: 0});
     registry.re = regExp(keys(registry.map));
+  }
+
+  if (isFragment) {
+    const {render} = Class.prototype;
+    defineProperty(
+      Class.prototype,
+      'render',
+      {
+        configurable: true,
+        value() {
+          if (render)
+            render.apply(this, arguments);
+          if (this.parentNode) {
+            const range = document.createRange();
+            range.setStartBefore(this.firstChild);
+            range.setEndAfter(this.lastChild);
+            this.parentNode.replaceChild(range.extractContents(), this);
+          }
+        }
+      }
+    );
   }
 
   const args = [is, Class];
@@ -220,6 +227,7 @@ const setupIncludes = (Class, tagName, is, u) => {
       const {render} = prototype;
       const {info} = value;
       defineProperty(prototype, 'render', {
+        configurable: true,
         value() {
           const tmp = getInfo();
           setInfo(info);

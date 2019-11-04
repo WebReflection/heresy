@@ -1,4 +1,4 @@
-const {define, html, render} = heresy;
+const {define, html, render, ref} = heresy;
 
 // define the custom element (class name mandatory)
 define('MyButton<button>', class extends HTMLButtonElement {
@@ -67,6 +67,7 @@ setTimeout(() => {
   const MyButton = {
     extends: 'button',
     mappedAttributes: ['props'],
+    onprops() { this.render(); },
     render() {
       this.html`Click ${this.props.name}!`;
     }
@@ -74,9 +75,22 @@ setTimeout(() => {
   const Outer = {
     extends: 'fragment',
     includes: {Div, MyButton},
+    mappedAttributes: ['value'],
+    onvalue() {
+      const {current: button} = ref(this, 'button');
+      if (button)
+        button.props = {name: this.value};
+    },
     render() {
-      this.html`<Div/><MyButton props=${{name: 'Magic'}}/>`;
+      this.html`<Div/><MyButton ref=${ref(this, 'button')} props=${{name: this.value}}/>`;
     }
   };
-  render(document.body, Outer);
-}, 3000);
+
+  define('Outer', Outer);
+  setInterval(
+    () => {
+      render(document.body, () => html`<Outer .value=${Math.random()} />`);
+    },
+    1000
+  );
+}, 2000);
