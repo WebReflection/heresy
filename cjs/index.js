@@ -2,7 +2,7 @@
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
 
-const {augmented, render, secret, html, svg} = require('./augmented.js');
+const {augmented, lighterRender, secret, html, svg} = require('./augmented.js');
 const {
   extend,
   hash,
@@ -23,8 +23,13 @@ const {
   keys
 } = Object;
 
-const HTML = {element: HTMLElement};
+const HTML = {
+  element: HTMLElement,
+  fragment: extend(DocumentFragment, false)
+};
+
 const cc = new WeakMap;
+const dc = new WeakMap;
 const oc = new WeakMap;
 
 const info = (tagName, is) => ({tagName, is, element: tagName === 'element'});
@@ -109,7 +114,7 @@ const register = ($, definition, uid) => {
                 asColon ||
                 definition.tagName ||
                 definition.extends ||
-                "element";
+                'element';
 
   if (!/^[A-Za-z0-9:._-]+$/.test(tagName))
     throw 'Invalid tag';
@@ -159,6 +164,23 @@ const register = ($, definition, uid) => {
   customElements.define(...args);
 
   return {Class, is, name, tagName};
+};
+
+const render = (where, what) => lighterRender(
+  where,
+  typeof what === 'function' ?
+    what :
+    ('nodeType' in what ? () => what : runtime(what))
+);
+
+let dcid = Math.random();
+const runtime = Component => {
+  let Class = dc.get(Component);
+  if (!Class) {
+    const name = ('Heresy' + ++dcid).replace(/[^He-y0-9]/g, '');
+    dc.set(Component, Class = define(name, Component));
+  }
+  return () => Class.new();
 };
 
 const setupIncludes = (Class, tagName, is, u) => {

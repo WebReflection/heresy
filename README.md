@@ -76,9 +76,9 @@ class Item extends HTMLLiElement {
   render() { this.html`my name is ${this.props.name}`; }
 }
 
-define('MyItem<li>', literal);
+define('MyItem<li>', Item);
 // OR
-define('MyItem:li', literal);
+define('MyItem:li', Item);
 ```
 
 

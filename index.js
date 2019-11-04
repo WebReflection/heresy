@@ -2041,8 +2041,8 @@ var heresy = (function (document,exports) {
             var e = evt(name);
             e.detail = detail;
             if (ws.has(this)) this.dispatchEvent(e);else {
-              if (!$mappedAttributes.has(this)) $mappedAttributes.set(this, []);
-              $mappedAttributes.get(this).push(e);
+              var dispatch = $mappedAttributes.get(this);
+              if (dispatch) dispatch.push(e);else $mappedAttributes.set(this, [e]);
             }
           }
         }
@@ -2083,12 +2083,6 @@ var heresy = (function (document,exports) {
   };
 
   svg["for"] = lighterSVG["for"];
-
-  var render = function render(where, what) {
-    return lighterRender(where, typeof what === 'function' ? what : function () {
-      return what;
-    });
-  };
 
   var setParsed = function setParsed(wm, template, _ref3) {
     var info = _ref3.info;
@@ -2179,9 +2173,11 @@ var heresy = (function (document,exports) {
       getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       keys$1 = Object.keys;
   var HTML = {
-    element: HTMLElement
+    element: HTMLElement,
+    fragment: extend(DocumentFragment, false)
   };
   var cc = new WeakMap$1();
+  var dc = new WeakMap$1();
   var oc = new WeakMap$1();
 
   var info = function info(tagName, is) {
@@ -2272,7 +2268,7 @@ var heresy = (function (document,exports) {
     var name = RegExp.$1,
         asTag = RegExp.$3,
         asColon = RegExp.$4;
-    var tagName = asTag || asColon || definition.tagName || definition["extends"] || "element";
+    var tagName = asTag || asColon || definition.tagName || definition["extends"] || 'element';
     if (!/^[A-Za-z0-9:._-]+$/.test(tagName)) throw 'Invalid tag';
     var hyphenizedName = '';
     var suffix = '';
@@ -2324,6 +2320,27 @@ var heresy = (function (document,exports) {
       is: is,
       name: name,
       tagName: tagName
+    };
+  };
+
+  var render = function render(where, what) {
+    return lighterRender(where, typeof what === 'function' ? what : 'nodeType' in what ? function () {
+      return what;
+    } : runtime(what));
+  };
+
+  var dcid = Math.random();
+
+  var runtime = function runtime(Component) {
+    var Class = dc.get(Component);
+
+    if (!Class) {
+      var name = ('Heresy' + ++dcid).replace(/[^He-y0-9]/g, '');
+      dc.set(Component, Class = define(name, Component));
+    }
+
+    return function () {
+      return Class["new"]();
     };
   };
 

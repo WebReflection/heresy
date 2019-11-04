@@ -7,9 +7,7 @@ define('MyButton<button>', class extends HTMLButtonElement {
     console.log(event.type, this.nodeName, this.is);
   }
 
-  // (optional) intercepts some attribute (any value)
-  set props(props) { this._props = props; }
-  get props() { return this._props; }
+  get mappedAttributes() { return ['props']; }
 
   // (optional) populate this button content
   //            (kinda useless with void elements such img, input, ...)
@@ -44,3 +42,41 @@ render(document.body, () => html`
   </Div>
   <MyButton props=${{name: 'Magic'}}/>
 `);
+
+setTimeout(() => {
+  const H1 = {extends: 'h1'};
+  const P = {extends: 'p'};
+  const Span = {
+    extends: 'span',
+    mappedAttributes: ['data'],
+    ondata({detail}) {
+      this.innerHTML = `<em>${detail}</em>`;
+    }
+  };
+  const Div = {
+    extends: 'div',
+    includes: {H1, P, Span},
+    render() {
+      this.html`
+        <H1>Hello there</H1>
+        <P>This is how custom elements look <Span data=${'via heresy'} />.</P>
+        <P>Isn't this <Span data=${'awesome'}/>?</P>
+      `;
+    }
+  };
+  const MyButton = {
+    extends: 'button',
+    mappedAttributes: ['props'],
+    render() {
+      this.html`Click ${this.props.name}!`;
+    }
+  };
+  const Outer = {
+    extends: 'div',
+    includes: {Div, MyButton},
+    render() {
+      this.html`<Div/><MyButton props=${{name: 'Magic'}}/>`;
+    }
+  };
+  render(document.body, Outer);
+}, 3000);

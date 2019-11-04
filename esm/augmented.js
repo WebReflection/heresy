@@ -176,9 +176,11 @@ const augmented = Class => {
           if (ws.has(this))
             this.dispatchEvent(e);
           else {
-            if (!$mappedAttributes.has(this))
-              $mappedAttributes.set(this, []);
-            $mappedAttributes.get(this).push(e);
+            const dispatch = $mappedAttributes.get(this);
+            if (dispatch)
+              dispatch.push(e);
+            else
+              $mappedAttributes.set(this, [e]);
           }
         }
       }
@@ -206,11 +208,6 @@ html.for = lighterHTML.for;
 const svg = (...args) => new Hole('svg', args);
 svg.for = lighterSVG.for;
 
-const render = (where, what) => lighterRender(
-  where,
-  typeof what === 'function' ? what : () => what
-);
-
 const setParsed = (wm, template, {info}) => {
   const value = (
     info ?
@@ -237,7 +234,8 @@ const wrap = (self, type, wm) => (tpl, ...values) => {
 export {
   secret,
   augmented,
-  render, html, svg
+  lighterRender,
+  html, svg
 };
 
 function addListener(type) {
