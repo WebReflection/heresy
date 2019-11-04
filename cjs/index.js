@@ -2,7 +2,7 @@
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
 
-const {augmented, lighterRender, secret, html, svg} = require('./augmented.js');
+const {Hole, augmented, lighterRender, secret, html, svg} = require('./augmented.js');
 const {
   extend,
   hash,
@@ -193,7 +193,7 @@ const render = (where, what) => lighterRender(
   where,
   typeof what === 'function' ?
     what :
-    ('nodeType' in what ? () => what : runtime(what))
+    (what instanceof Hole ? () => what : runtime(what))
 );
 
 let dcid = Math.random();

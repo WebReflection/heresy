@@ -232,6 +232,7 @@ const wrap = (self, type, wm) => (tpl, ...values) => {
   return lighterRender(self, () => type(local, ...values));
 };
 
+exports.Hole = Hole;
 exports.secret = secret;
 exports.augmented = augmented;
 exports.lighterRender = lighterRender;

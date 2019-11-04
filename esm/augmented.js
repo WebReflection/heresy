@@ -232,6 +232,7 @@ const wrap = (self, type, wm) => (tpl, ...values) => {
 };
 
 export {
+  Hole,
   secret,
   augmented,
   lighterRender,

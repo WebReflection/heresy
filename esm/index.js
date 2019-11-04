@@ -1,7 +1,7 @@
 import WeakMap from '@ungap/weakmap';
 import hyphenized from 'hyphenizer';
 
-import {augmented, lighterRender, secret, html, svg} from './augmented.js';
+import {Hole, augmented, lighterRender, secret, html, svg} from './augmented.js';
 import {
   extend,
   hash,
@@ -191,7 +191,7 @@ const render = (where, what) => lighterRender(
   where,
   typeof what === 'function' ?
     what :
-    ('nodeType' in what ? () => what : runtime(what))
+    (what instanceof Hole ? () => what : runtime(what))
 );
 
 let dcid = Math.random();

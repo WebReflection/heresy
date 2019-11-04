@@ -2341,7 +2341,7 @@ var heresy = (function (document,exports) {
   };
 
   var render = function render(where, what) {
-    return lighterRender(where, typeof what === 'function' ? what : 'nodeType' in what ? function () {
+    return lighterRender(where, typeof what === 'function' ? what : what instanceof Hole ? function () {
       return what;
     } : runtime(what));
   };
