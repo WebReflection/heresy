@@ -24,8 +24,7 @@ const {
 } = Object;
 
 const HTML = {
-  element: HTMLElement,
-  fragment: extend(DocumentFragment, false)
+  element: HTMLElement
 };
 
 const cc = new WeakMap;

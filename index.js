@@ -2173,8 +2173,7 @@ var heresy = (function (document,exports) {
       getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
       keys$1 = Object.keys;
   var HTML = {
-    element: HTMLElement,
-    fragment: extend(DocumentFragment, false)
+    element: HTMLElement
   };
   var cc = new WeakMap$1();
   var dc = new WeakMap$1();
