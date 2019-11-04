@@ -59,8 +59,8 @@ setTimeout(() => {
     render() {
       this.html`
         <H1>Hello there</H1>
-        <P>This is how custom elements look <Span data=${'via heresy'} />.</P>
-        <P>Isn't this <Span data=${'awesome'}/>?</P>
+        <P>This is how custom elements look <Span .data=${'via heresy'} />.</P>
+        <P>Isn't this <Span .data=${'awesome'}/>?</P>
       `;
     }
   };
