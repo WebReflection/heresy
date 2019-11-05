@@ -45,7 +45,7 @@ const fromClass = constructor => {
   return Class;
 };
 
-const fromObject = (object, tag, isFragment) => {
+const fromObject = (object, tag) => {
   const {statics, prototype} = grabInfo(object);
   const Class = extend(
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),

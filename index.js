@@ -2197,7 +2197,7 @@ var heresy = (function (document,exports) {
     return Class;
   };
 
-  var fromObject = function fromObject(object, tag, isFragment) {
+  var fromObject = function fromObject(object, tag) {
     var _grabInfo = grabInfo(object),
         statics = _grabInfo.statics,
         prototype = _grabInfo.prototype;
