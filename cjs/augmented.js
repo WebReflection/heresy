@@ -3,6 +3,7 @@ const Event = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* ist
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const WeakSet = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakset'));
 const tl = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/template-literal'));
+const {augmentor, dropEffect} = require('augmentor');
 
 const {Hole, custom} = require('lighterhtml');
 
@@ -13,7 +14,7 @@ const {
   html: lighterHTML,
   svg: lighterSVG
 } = custom({
-  transform: $ => markup => replace(markup, registry)
+  transform: () => markup => replace(markup, registry)
 });
 
 const secret = '_\uD83D\uDD25';
@@ -51,7 +52,7 @@ const addInit = (prototype, properties, method) => {
 
 const augmented = Class => {
 
-  const {prototype} = Class;
+  const {hooks, prototype} = Class;
 
   const events = [];
   const properties = {
@@ -77,6 +78,22 @@ const augmented = Class => {
       configurable,
       value: handleEvent
     };
+
+  if (hooks) {
+    const {oninit} = prototype;
+    defineProperties(prototype, {
+      oninit: {
+        configurable,
+        value() {
+          const hook = augmentor(this.render.bind(this));
+          this.render = hook;
+          this.addEventListener('disconnected', () => dropEffect(hook), false);
+          if (oninit)
+            oninit.apply(this, arguments);
+        }
+      }
+    });
+  }
 
   // setup the init dispatch only if needed
   // ensure render with an init is triggered after

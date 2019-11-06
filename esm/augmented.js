@@ -2,6 +2,7 @@ import Event from '@ungap/event';
 import WeakMap from '@ungap/weakmap';
 import WeakSet from '@ungap/weakset';
 import tl from '@ungap/template-literal';
+import {augmentor, dropEffect} from 'augmentor';
 
 import {Hole, custom} from 'lighterhtml';
 
@@ -12,7 +13,7 @@ const {
   html: lighterHTML,
   svg: lighterSVG
 } = custom({
-  transform: $ => markup => replace(markup, registry)
+  transform: () => markup => replace(markup, registry)
 });
 
 const secret = '_\uD83D\uDD25';
@@ -50,7 +51,7 @@ const addInit = (prototype, properties, method) => {
 
 const augmented = Class => {
 
-  const {prototype} = Class;
+  const {hooks, prototype} = Class;
 
   const events = [];
   const properties = {
@@ -76,6 +77,22 @@ const augmented = Class => {
       configurable,
       value: handleEvent
     };
+
+  if (hooks) {
+    const {oninit} = prototype;
+    defineProperties(prototype, {
+      oninit: {
+        configurable,
+        value() {
+          const hook = augmentor(this.render.bind(this));
+          this.render = hook;
+          this.addEventListener('disconnected', () => dropEffect(hook), false);
+          if (oninit)
+            oninit.apply(this, arguments);
+        }
+      }
+    });
+  }
 
   // setup the init dispatch only if needed
   // ensure render with an init is triggered after

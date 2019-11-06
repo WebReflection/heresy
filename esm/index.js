@@ -69,6 +69,7 @@ const grabInfo = object => {
         name = 'tagName';
       case 'contains':
       case 'includes':
+      case 'hooks':
       case 'name':
       case 'booleanAttributes':
       case 'mappedAttributes':
@@ -249,3 +250,14 @@ export {
   // exact same heresy-ssr helpers, usable in any component
   ref, html, svg
 };
+
+export {
+  useCallback,
+  useContext, createContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'augmentor';

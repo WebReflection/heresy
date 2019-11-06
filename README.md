@@ -29,6 +29,7 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
   * an ever available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
   * automatic, lazy `this.html` and `this.svg` template literal tags, to populate a component's content within its optionally, locally scoped defined elements
   * provides a simplified way to target rendered nodes through the React-like `ref()` utility
+  * **hooks** implemented, and exported, through [augmentor](https://github.com/WebReflection/augmentor#readme). Define `hooks: true` and use any of the avilable hooks within the render method.
 
 
 ### Usage in a nutshell
@@ -183,6 +184,10 @@ class MyButton extends HTMLButtonElement {
       border: 2px solid black;
     }`
   }
+
+  // (optional) static field that is `false` by default, but if true
+  //            enables the usage of hooks within the render() method
+  static get hooks() { return true; }
 
   // (optional) event driven initialization that will happen only once
   // the ideal constructor substitute for any sort of one-off init
