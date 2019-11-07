@@ -2465,35 +2465,25 @@ var heresy = (function (document,exports) {
   var dc = new WeakMap$1();
   var oc = new WeakMap$1();
 
-  var augmentRender = function augmentRender(proto) {
-    var render = proto.render;
-    defineProperty(proto, 'render', {
-      configurable: true,
-      value: function value() {
-        if (render) render.apply(this, arguments);
-
-        if (this.parentNode) {
-          var range = document.createRange();
-          range.setStartBefore(this.firstChild);
-          range.setEndAfter(this.lastChild);
-          this.parentNode.replaceChild(range.extractContents(), this);
-        }
-      }
-    });
+  var info = function info(tagName, is) {
+    return {
+      tagName: tagName,
+      is: is,
+      element: tagName === 'element'
+    };
   };
 
   var define = function define($, definition) {
     return (typeof $ === 'string' ? register($, definition, '') : register($.name, $, '')).Class;
   };
 
-  var fromClass = function fromClass(constructor, isFragment) {
+  var fromClass = function fromClass(constructor) {
     var Class = extend(constructor, false);
-    if (isFragment) augmentRender(Class.prototype);
     cc.set(constructor, augmented(Class));
     return Class;
   };
 
-  var fromObject = function fromObject(object, tag, isFragment) {
+  var fromObject = function fromObject(object, tag) {
     var _grabInfo = grabInfo(object),
         statics = _grabInfo.statics,
         prototype = _grabInfo.prototype;
@@ -2501,7 +2491,6 @@ var heresy = (function (document,exports) {
     var Class = extend(HTML[tag] || (HTML[tag] = document.createElement(tag).constructor), false);
     defineProperties$1(Class.prototype, prototype);
     defineProperties$1(Class, statics);
-    if (isFragment) augmentRender(Class.prototype);
     oc.set(object, augmented(Class));
     return Class;
   };
@@ -2537,14 +2526,6 @@ var heresy = (function (document,exports) {
       }
     });
     return info;
-  };
-
-  var info = function info(tagName, is) {
-    return {
-      tagName: tagName,
-      is: is,
-      element: tagName === 'element'
-    };
   };
 
   var injectStyle = function injectStyle(cssText) {
@@ -2588,7 +2569,7 @@ var heresy = (function (document,exports) {
 
     var is = hyphenizedName + suffix;
     if (customElements.get(is)) throw "Duplicated ".concat(is, " definition");
-    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName, isFragment) : cc.get(definition) || fromClass(definition, isFragment), true);
+    var Class = extend(typeof(definition) === 'object' ? oc.get(definition) || fromObject(definition, tagName) : cc.get(definition) || fromClass(definition), true);
     var element = tagName === 'element';
     defineProperty(Class, 'new', {
       value: element ? function () {
@@ -2611,6 +2592,23 @@ var heresy = (function (document,exports) {
         i: 0
       });
       registry.re = regExp(keys$1(registry.map));
+    }
+
+    if (isFragment) {
+      var _render = Class.prototype.render;
+      defineProperty(Class.prototype, 'render', {
+        configurable: true,
+        value: function value() {
+          if (_render) _render.apply(this, arguments);
+
+          if (this.parentNode) {
+            var range = document.createRange();
+            range.setStartBefore(this.firstChild);
+            range.setEndAfter(this.lastChild);
+            this.parentNode.replaceChild(range.extractContents(), this);
+          }
+        }
+      });
     }
 
     var args = [is, Class];
@@ -2682,7 +2680,7 @@ var heresy = (function (document,exports) {
       });
 
       if ('render' in prototype) {
-        var _render = prototype.render;
+        var _render2 = prototype.render;
         var _info = value.info;
         defineProperty(prototype, 'render', {
           configurable: true,
@@ -2690,7 +2688,7 @@ var heresy = (function (document,exports) {
             var tmp = getInfo();
             setInfo(_info);
 
-            var out = _render.apply(this, arguments);
+            var out = _render2.apply(this, arguments);
 
             setInfo(tmp);
             return out;
