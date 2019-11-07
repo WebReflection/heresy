@@ -107,10 +107,7 @@ const augmented = Class => {
         configurable,
         value() {
           const hook = augmentor(this.render.bind(this, hooks));
-          defineProperties(this, 'render', {
-            configurable,
-            value: hook
-          });
+          this.render = hook;
           this.addEventListener(
             'disconnected',
             dropEffect.bind(null, hook),
