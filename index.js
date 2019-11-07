@@ -2239,7 +2239,10 @@ var heresy = (function (document,exports) {
           configurable: configurable,
           value: function value() {
             var hook = augmentor(this.render.bind(this, hooks$1));
-            this.render = hook;
+            defineProperties(this, 'render', {
+              configurable: configurable,
+              value: hook
+            });
             this.addEventListener('disconnected', dropEffect.bind(null, hook), false);
             if (oninit) oninit.apply(this, arguments);
           }
