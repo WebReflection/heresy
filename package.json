@@ -27,12 +27,13 @@
     "@ungap/template-literal": "^0.4.1",
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
+    "augmentor": "^1.1.3",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^1.2.3"
+    "lighterhtml": "^1.4.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.6.4",
-    "@babel/preset-env": "^7.6.3",
+    "@babel/core": "^7.7.2",
+    "@babel/preset-env": "^7.7.1",
     "@ungap/degap": "^0.1.4",
     "ascjs": "^3.1.0",
     "drop-babel-typeof": "^1.0.3",
