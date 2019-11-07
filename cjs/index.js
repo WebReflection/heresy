@@ -31,7 +31,26 @@ const cc = new WeakMap;
 const dc = new WeakMap;
 const oc = new WeakMap;
 
-const info = (tagName, is) => ({tagName, is, element: tagName === 'element'});
+const augmentRender = proto => {
+  const {render} = proto;
+  defineProperty(
+    proto,
+    'render',
+    {
+      configurable: true,
+      value() {
+        if (render)
+          render.apply(this, arguments);
+        if (this.parentNode) {
+          const range = document.createRange();
+          range.setStartBefore(this.firstChild);
+          range.setEndAfter(this.lastChild);
+          this.parentNode.replaceChild(range.extractContents(), this);
+        }
+      }
+    }
+  );
+};
 
 const define = ($, definition) => (
   typeof $ === 'string' ?
@@ -39,13 +58,15 @@ const define = ($, definition) => (
     register($.name, $, '')
 ).Class;
 
-const fromClass = constructor => {
+const fromClass = (constructor, isFragment) => {
   const Class = extend(constructor, false);
+  if (isFragment)
+    augmentRender(Class.prototype);
   cc.set(constructor, augmented(Class));
   return Class;
 };
 
-const fromObject = (object, tag) => {
+const fromObject = (object, tag, isFragment) => {
   const {statics, prototype} = grabInfo(object);
   const Class = extend(
     HTML[tag] || (HTML[tag] = document.createElement(tag).constructor),
@@ -53,6 +74,8 @@ const fromObject = (object, tag) => {
   );
   defineProperties(Class.prototype, prototype);
   defineProperties(Class, statics);
+  if (isFragment)
+    augmentRender(Class.prototype);
   oc.set(object, augmented(Class));
   return Class;
 };
@@ -85,6 +108,8 @@ const grabInfo = object => {
   });
   return info;
 };
+
+const info = (tagName, is) => ({tagName, is, element: tagName === 'element'});
 
 const injectStyle = cssText => {
   if ((cssText || '').length) {
@@ -139,8 +164,8 @@ const register = ($, definition, uid) => {
 
   const Class = extend(
     typeof definition === 'object' ?
-      (oc.get(definition) || fromObject(definition, tagName)) :
-      (cc.get(definition) || fromClass(definition)),
+      (oc.get(definition) || fromObject(definition, tagName, isFragment)) :
+      (cc.get(definition) || fromClass(definition, isFragment)),
     true
   );
 
@@ -158,27 +183,6 @@ const register = ($, definition, uid) => {
     const id = hash(hyphenizedName.toUpperCase());
     registry.map[name] = setupIncludes(Class, tagName, is, {id, i: 0});
     registry.re = regExp(keys(registry.map));
-  }
-
-  if (isFragment) {
-    const {render} = Class.prototype;
-    defineProperty(
-      Class.prototype,
-      'render',
-      {
-        configurable: true,
-        value() {
-          if (render)
-            render.apply(this, arguments);
-          if (this.parentNode) {
-            const range = document.createRange();
-            range.setStartBefore(this.firstChild);
-            range.setEndAfter(this.lastChild);
-            this.parentNode.replaceChild(range.extractContents(), this);
-          }
-        }
-      }
-    );
   }
 
   const args = [is, Class];
