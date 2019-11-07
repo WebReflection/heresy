@@ -2,11 +2,33 @@ import Event from '@ungap/event';
 import WeakMap from '@ungap/weakmap';
 import WeakSet from '@ungap/weakset';
 import tl from '@ungap/template-literal';
-import {augmentor, dropEffect} from 'augmentor';
 
 import {Hole, custom} from 'lighterhtml';
 
+import {
+  augmentor,
+  useCallback,
+  useContext,
+  useEffect, dropEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'augmentor';
+
 import {registry, replace} from './utils.js';
+
+const hooks = {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+};
 
 const {
   render: lighterRender,
@@ -51,7 +73,7 @@ const addInit = (prototype, properties, method) => {
 
 const augmented = Class => {
 
-  const {hooks, prototype} = Class;
+  const {prototype} = Class;
 
   const events = [];
   const properties = {
@@ -78,15 +100,19 @@ const augmented = Class => {
       value: handleEvent
     };
 
-  if (hooks) {
+  if ('render' in prototype && prototype.render.length) {
     const {oninit} = prototype;
     defineProperties(prototype, {
       oninit: {
         configurable,
         value() {
-          const hook = augmentor(this.render.bind(this));
+          const hook = augmentor(this.render.bind(this, hooks));
           this.render = hook;
-          this.addEventListener('disconnected', () => dropEffect(hook), false);
+          this.addEventListener(
+            'disconnected',
+            dropEffect.bind(null, hook),
+            false
+          );
           if (oninit)
             oninit.apply(this, arguments);
         }

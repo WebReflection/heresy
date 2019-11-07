@@ -29,7 +29,7 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
   * an ever available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
   * automatic, lazy `this.html` and `this.svg` template literal tags, to populate a component's content within its optionally, locally scoped defined elements
   * provides a simplified way to target rendered nodes through the React-like `ref()` utility
-  * **hooks** implemented, and exported, through [augmentor](https://github.com/WebReflection/augmentor#readme). Define `hooks: true` and use any of the avilable hooks within the render method.
+  * **hooks** implemented via `render({useState, ...})` definition. If a render has an argument, it will contain all hooks exported from [augmentor](https://github.com/WebReflection/augmentor#readme). Import `createContext` from _heresy_, to be able to use `render({useContext})`.
 
 
 ### Usage in a nutshell
@@ -185,10 +185,6 @@ class MyButton extends HTMLButtonElement {
     }`
   }
 
-  // (optional) static field that is `false` by default, but if true
-  //            enables the usage of hooks within the render() method
-  static get hooks() { return true; }
-
   // (optional) event driven initialization that will happen only once
   // the ideal constructor substitute for any sort of one-off init
   // this is triggered only once the component goes live, never before *
@@ -214,8 +210,11 @@ class MyButton extends HTMLButtonElement {
   // through the onattributechanged callback
   get observedAttributes() { return ['name', 'age']; }
 
-  // (optional) populate this button content
-  //            (kinda useless with void elements such img, input, ...)
+  // (optional) populate this custom element content
+  //            if the signature has at least one argument,
+  //            as in render({useState, ...}),
+  //            the render will be bound automatically
+  //            with hooks capabilities
   render() {
     // this.html or this.svg are provided automatically
     this.html`Click ${this.props.name}!`;

@@ -275,253 +275,6 @@ var heresy = (function (document,exports) {
   }
 
   /*! (c) Andrea Giammarchi - ISC */
-  var curr = null;
-
-  var invoke = function invoke(fn) {
-    fn();
-  };
-
-  var augmentor = function augmentor(fn) {
-    var stack = [];
-    return function hook() {
-      var prev = curr;
-      var after = [];
-      var i = 0;
-      curr = {
-        hook: hook,
-        args: arguments,
-        stack: stack,
-
-        get index() {
-          return i++;
-        },
-
-        after: after
-      };
-
-      try {
-        return fn.apply(null, arguments);
-      } finally {
-        curr = prev;
-        after.forEach(invoke);
-      }
-    };
-  };
-  var current = function current() {
-    return curr;
-  };
-  function different(value, i) {
-    return value !== this[i];
-  }
-
-  var compat = typeof cancelAnimationFrame === 'function';
-  var cAF = compat ? cancelAnimationFrame : clearTimeout;
-  var rAF = compat ? requestAnimationFrame : setTimeout;
-  function reraf(limit) {
-    var force, timer, callback, self, args;
-    reset();
-    return function reschedule(_callback, _self, _args) {
-      callback = _callback;
-      self = _self;
-      args = _args;
-      if (!timer) timer = rAF(invoke);
-      if (--force < 0) stop(true);
-      return stop;
-    };
-
-    function invoke() {
-      reset();
-      callback.apply(self, args || []);
-    }
-
-    function reset() {
-      force = limit || Infinity;
-      timer = compat ? 0 : null;
-    }
-
-    function stop(flush) {
-      var didStop = !!timer;
-
-      if (didStop) {
-        cAF(timer);
-        if (flush) invoke();
-      }
-
-      return didStop;
-    }
-  }
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var updates = new WeakMap();
-  var useState = function useState(value) {
-    var _current = current(),
-        hook = _current.hook,
-        args = _current.args,
-        stack = _current.stack,
-        index = _current.index;
-
-    if (stack.length <= index) {
-      stack[index] = value;
-      if (!updates.has(hook)) updates.set(hook, reraf());
-    }
-
-    return [stack[index], function (value) {
-      stack[index] = value;
-      updates.get(hook)(hook, null, args);
-    }];
-  };
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var hooks = new WeakMap();
-
-  var invoke$1 = function invoke(_ref) {
-    var hook = _ref.hook,
-        args = _ref.args;
-    hook.apply(null, args);
-  };
-
-  var createContext = function createContext(value) {
-    var context = {
-      value: value,
-      provide: provide
-    };
-    hooks.set(context, []);
-    return context;
-  };
-  var useContext = function useContext(context) {
-    var _current = current(),
-        hook = _current.hook,
-        args = _current.args;
-
-    var stack = hooks.get(context);
-    var info = {
-      hook: hook,
-      args: args
-    };
-    if (!stack.some(update, info)) stack.push(info);
-    return context.value;
-  };
-
-  function provide(value) {
-    if (this.value !== value) {
-      this.value = value;
-      hooks.get(this).forEach(invoke$1);
-    }
-  }
-
-  function update(_ref2) {
-    var hook = _ref2.hook;
-    return hook === this.hook;
-  }
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var effects = new WeakMap();
-
-  var stop = function stop() {};
-
-  var createEffect = function createEffect(sync) {
-    return function (effect, guards) {
-      var _current = current(),
-          hook = _current.hook,
-          stack = _current.stack,
-          index = _current.index,
-          after = _current.after;
-
-      if (index < stack.length) {
-        var info = stack[index];
-        var clean = info.clean,
-            invoke = info.invoke,
-            update = info.update,
-            values = info.values;
-
-        if (!guards || guards.some(different, values)) {
-          info.values = guards;
-
-          if (clean) {
-            info.clean = null;
-            clean();
-          }
-
-          if (sync) after.push(invoke);else update(invoke);
-        }
-      } else {
-        var _invoke = function _invoke() {
-          _info.clean = effect();
-        };
-
-        if (!effects.has(hook)) effects.set(hook, {
-          stack: [],
-          update: reraf()
-        });
-        var details = effects.get(hook);
-        var _info = {
-          clean: null,
-          invoke: _invoke,
-          stop: stop,
-          update: details.update,
-          values: guards
-        };
-        stack[index] = _info;
-        details.stack.push(_info);
-        if (sync) after.push(_invoke);else _info.stop = details.update(_invoke);
-      }
-    };
-  };
-
-  var useEffect = createEffect(false);
-  var useLayoutEffect = createEffect(true);
-  var dropEffect = function dropEffect(hook) {
-    if (effects.has(hook)) effects.get(hook).stack.forEach(function (info) {
-      var clean = info.clean,
-          stop = info.stop;
-      stop();
-
-      if (clean) {
-        info.clean = null;
-        clean();
-      }
-    });
-  };
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var useMemo = function useMemo(memo, guards) {
-    var _current = current(),
-        stack = _current.stack,
-        index = _current.index;
-
-    if (!guards || stack.length <= index || guards.some(different, stack[index].values)) stack[index] = {
-      current: memo(),
-      values: guards
-    };
-    return stack[index].current;
-  };
-  var useCallback = function useCallback(fn, guards) {
-    return useMemo(function () {
-      return fn;
-    }, guards);
-  };
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var useReducer = function useReducer(reducer, value, init) {
-    // avoid Babel destructuring bloat
-    var pair = useState(init ? init(value) : value);
-    return [pair[0], function (value) {
-      pair[1](reducer(pair[0], value));
-    }];
-  };
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var useRef = function useRef(value) {
-    var _current = current(),
-        stack = _current.stack,
-        index = _current.index;
-
-    return index < stack.length ? stack[index] : stack[index] = {
-      current: value
-    };
-  };
-
-  /*! (c) Andrea Giammarchi - ISC */
   // Custom
   var UID = '-' + Math.random().toFixed(6) + '%'; //                           Edge issue!
 
@@ -1764,7 +1517,7 @@ var heresy = (function (document,exports) {
                     break;
 
                   case 'function':
-                    anyContent(value.map(invoke$2, node));
+                    anyContent(value.map(invoke, node));
                     break;
 
                   case 'object':
@@ -1830,7 +1583,7 @@ var heresy = (function (document,exports) {
     }
   };
 
-  function invoke$2(callback) {
+  function invoke(callback) {
     return callback(this);
   }
 
@@ -1839,7 +1592,7 @@ var heresy = (function (document,exports) {
   var wm = new WeakMap$1();
   var container = new WeakMap$1();
   var dtPrototype = Tagger.prototype;
-  var current$1 = null;
+  var current = null;
 
   var lighterhtml = function lighterhtml(Tagger) {
     var html = outer('html', Tagger);
@@ -1860,7 +1613,7 @@ var heresy = (function (document,exports) {
         };
       },
       render: function render(node, callback) {
-        var value = update$1.call(this, node, callback, Tagger);
+        var value = update.call(this, node, callback, Tagger);
 
         if (container.get(node) !== value) {
           container.set(node, value);
@@ -1911,7 +1664,7 @@ var heresy = (function (document,exports) {
   function innerTag(type, Tagger, hole) {
     return function () {
       var args = tta.apply(null, arguments);
-      return hole || current$1 ? new Hole(type, args) : new Tagger(type).apply(null, args);
+      return hole || current ? new Hole(type, args) : new Tagger(type).apply(null, args);
     };
   }
 
@@ -1938,7 +1691,7 @@ var heresy = (function (document,exports) {
 
       return ref[id] = function () {
         args = tta.apply(null, arguments);
-        var result = update$1(tagger, callback, Tagger);
+        var result = update(tagger, callback, Tagger);
         return wire || (wire = wiredContent(result));
       };
     }
@@ -1963,40 +1716,40 @@ var heresy = (function (document,exports) {
     return info;
   }
 
-  function update$1(reference, callback, Tagger) {
-    var prev = current$1;
-    current$1 = wm.get(reference) || set(reference);
-    current$1.i = 0;
+  function update(reference, callback, Tagger) {
+    var prev = current;
+    current = wm.get(reference) || set(reference);
+    current.i = 0;
     var ret = callback.call(this);
     var value;
 
     if (ret instanceof Hole) {
-      value = asNode$1(unroll(ret, 0, Tagger), current$1.update);
-      var _current = current$1,
+      value = asNode$1(unroll(ret, 0, Tagger), current.update);
+      var _current = current,
           i = _current.i,
           length = _current.length,
           stack = _current.stack,
           _update = _current.update;
-      if (i < length) stack.splice(current$1.length = i);
-      if (_update) current$1.update = false;
+      if (i < length) stack.splice(current.length = i);
+      if (_update) current.update = false;
     } else {
       value = asNode$1(ret, false);
     }
 
-    current$1 = prev;
+    current = prev;
     return value;
   }
 
   function unroll(hole, level, Tagger) {
-    var _current2 = current$1,
+    var _current2 = current,
         i = _current2.i,
         length = _current2.length,
         stack = _current2.stack;
     var type = hole.type,
         args = hole.args;
     var stacked = i < length;
-    current$1.i++;
-    if (!stacked) current$1.length = stack.push({
+    current.i++;
+    if (!stacked) current.length = stack.push({
       l: level,
       kind: type,
       tag: null,
@@ -2027,7 +1780,7 @@ var heresy = (function (document,exports) {
     info.tag = tag;
     info.tpl = args[0];
     info.wire = wire;
-    if (i < 1) current$1.update = true;
+    if (i < 1) current.update = true;
     return wire;
   }
 
@@ -2052,6 +1805,253 @@ var heresy = (function (document,exports) {
     var length = childNodes.length;
     return length === 1 ? childNodes[0] : length ? new Wire(childNodes) : node;
   }
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var curr = null;
+
+  var invoke$1 = function invoke(fn) {
+    fn();
+  };
+
+  var augmentor = function augmentor(fn) {
+    var stack = [];
+    return function hook() {
+      var prev = curr;
+      var after = [];
+      var i = 0;
+      curr = {
+        hook: hook,
+        args: arguments,
+        stack: stack,
+
+        get index() {
+          return i++;
+        },
+
+        after: after
+      };
+
+      try {
+        return fn.apply(null, arguments);
+      } finally {
+        curr = prev;
+        after.forEach(invoke$1);
+      }
+    };
+  };
+  var current$1 = function current() {
+    return curr;
+  };
+  function different(value, i) {
+    return value !== this[i];
+  }
+
+  var compat = typeof cancelAnimationFrame === 'function';
+  var cAF = compat ? cancelAnimationFrame : clearTimeout;
+  var rAF = compat ? requestAnimationFrame : setTimeout;
+  function reraf(limit) {
+    var force, timer, callback, self, args;
+    reset();
+    return function reschedule(_callback, _self, _args) {
+      callback = _callback;
+      self = _self;
+      args = _args;
+      if (!timer) timer = rAF(invoke);
+      if (--force < 0) stop(true);
+      return stop;
+    };
+
+    function invoke() {
+      reset();
+      callback.apply(self, args || []);
+    }
+
+    function reset() {
+      force = limit || Infinity;
+      timer = compat ? 0 : null;
+    }
+
+    function stop(flush) {
+      var didStop = !!timer;
+
+      if (didStop) {
+        cAF(timer);
+        if (flush) invoke();
+      }
+
+      return didStop;
+    }
+  }
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var updates = new WeakMap();
+  var useState = function useState(value) {
+    var _current = current$1(),
+        hook = _current.hook,
+        args = _current.args,
+        stack = _current.stack,
+        index = _current.index;
+
+    if (stack.length <= index) {
+      stack[index] = value;
+      if (!updates.has(hook)) updates.set(hook, reraf());
+    }
+
+    return [stack[index], function (value) {
+      stack[index] = value;
+      updates.get(hook)(hook, null, args);
+    }];
+  };
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var hooks = new WeakMap();
+
+  var invoke$2 = function invoke(_ref) {
+    var hook = _ref.hook,
+        args = _ref.args;
+    hook.apply(null, args);
+  };
+
+  var createContext = function createContext(value) {
+    var context = {
+      value: value,
+      provide: provide
+    };
+    hooks.set(context, []);
+    return context;
+  };
+  var useContext = function useContext(context) {
+    var _current = current$1(),
+        hook = _current.hook,
+        args = _current.args;
+
+    var stack = hooks.get(context);
+    var info = {
+      hook: hook,
+      args: args
+    };
+    if (!stack.some(update$1, info)) stack.push(info);
+    return context.value;
+  };
+
+  function provide(value) {
+    if (this.value !== value) {
+      this.value = value;
+      hooks.get(this).forEach(invoke$2);
+    }
+  }
+
+  function update$1(_ref2) {
+    var hook = _ref2.hook;
+    return hook === this.hook;
+  }
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var effects = new WeakMap();
+
+  var stop = function stop() {};
+
+  var createEffect = function createEffect(sync) {
+    return function (effect, guards) {
+      var _current = current$1(),
+          hook = _current.hook,
+          stack = _current.stack,
+          index = _current.index,
+          after = _current.after;
+
+      if (index < stack.length) {
+        var info = stack[index];
+        var clean = info.clean,
+            invoke = info.invoke,
+            update = info.update,
+            values = info.values;
+
+        if (!guards || guards.some(different, values)) {
+          info.values = guards;
+
+          if (clean) {
+            info.clean = null;
+            clean();
+          }
+
+          if (sync) after.push(invoke);else update(invoke);
+        }
+      } else {
+        var _invoke = function _invoke() {
+          _info.clean = effect();
+        };
+
+        if (!effects.has(hook)) effects.set(hook, {
+          stack: [],
+          update: reraf()
+        });
+        var details = effects.get(hook);
+        var _info = {
+          clean: null,
+          invoke: _invoke,
+          stop: stop,
+          update: details.update,
+          values: guards
+        };
+        stack[index] = _info;
+        details.stack.push(_info);
+        if (sync) after.push(_invoke);else _info.stop = details.update(_invoke);
+      }
+    };
+  };
+
+  var useEffect = createEffect(false);
+  var useLayoutEffect = createEffect(true);
+  var dropEffect = function dropEffect(hook) {
+    if (effects.has(hook)) effects.get(hook).stack.forEach(function (info) {
+      var clean = info.clean,
+          stop = info.stop;
+      stop();
+
+      if (clean) {
+        info.clean = null;
+        clean();
+      }
+    });
+  };
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var useMemo = function useMemo(memo, guards) {
+    var _current = current$1(),
+        stack = _current.stack,
+        index = _current.index;
+
+    if (!guards || stack.length <= index || guards.some(different, stack[index].values)) stack[index] = {
+      current: memo(),
+      values: guards
+    };
+    return stack[index].current;
+  };
+  var useCallback = function useCallback(fn, guards) {
+    return useMemo(function () {
+      return fn;
+    }, guards);
+  };
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var useReducer = function useReducer(reducer, value, init) {
+    // avoid Babel destructuring bloat
+    var pair = useState(init ? init(value) : value);
+    return [pair[0], function (value) {
+      pair[1](reducer(pair[0], value));
+    }];
+  };
+
+  /*! (c) Andrea Giammarchi - ISC */
+  var useRef = function useRef(value) {
+    var _current = current$1(),
+        stack = _current.stack,
+        index = _current.index;
+
+    return index < stack.length ? stack[index] : stack[index] = {
+      current: value
+    };
+  };
 
   var transpiled = null; // the angry koala check @WebReflection/status/1133757401482584064
 
@@ -2159,6 +2159,17 @@ var heresy = (function (document,exports) {
     tmp = info;
   };
 
+  var hooks$1 = {
+    useCallback: useCallback,
+    useContext: useContext,
+    useEffect: useEffect,
+    useLayoutEffect: useLayoutEffect,
+    useMemo: useMemo,
+    useReducer: useReducer,
+    useRef: useRef,
+    useState: useState
+  };
+
   var _custom = custom({
     transform: function transform() {
       return function (markup) {
@@ -2198,8 +2209,7 @@ var heresy = (function (document,exports) {
   };
 
   var augmented = function augmented(Class) {
-    var hooks = Class.hooks,
-        prototype = Class.prototype;
+    var prototype = Class.prototype;
     var events = [];
     var properties = {
       html: {
@@ -2222,17 +2232,15 @@ var heresy = (function (document,exports) {
       value: handleEvent
     };
 
-    if (hooks) {
+    if ('render' in prototype && prototype.render.length) {
       var oninit = prototype.oninit;
       defineProperties(prototype, {
         oninit: {
           configurable: configurable,
           value: function value() {
-            var hook = augmentor(this.render.bind(this));
+            var hook = augmentor(this.render.bind(this, hooks$1));
             this.render = hook;
-            this.addEventListener('disconnected', function () {
-              return dropEffect(hook);
-            }, false);
+            this.addEventListener('disconnected', dropEffect.bind(null, hook), false);
             if (oninit) oninit.apply(this, arguments);
           }
         }
@@ -2501,7 +2509,6 @@ var heresy = (function (document,exports) {
 
         case 'contains':
         case 'includes':
-        case 'hooks':
         case 'name':
         case 'booleanAttributes':
         case 'mappedAttributes':
@@ -2697,14 +2704,6 @@ var heresy = (function (document,exports) {
   exports.ref = ref;
   exports.render = render;
   exports.svg = svg;
-  exports.useCallback = useCallback;
-  exports.useContext = useContext;
-  exports.useEffect = useEffect;
-  exports.useLayoutEffect = useLayoutEffect;
-  exports.useMemo = useMemo;
-  exports.useReducer = useReducer;
-  exports.useRef = useRef;
-  exports.useState = useState;
 
   return exports;
 

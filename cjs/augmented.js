@@ -3,11 +3,34 @@ const Event = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* ist
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const WeakSet = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakset'));
 const tl = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/template-literal'));
-const {augmentor, dropEffect} = require('augmentor');
 
 const {Hole, custom} = require('lighterhtml');
 
+const {
+  augmentor,
+  useCallback,
+  useContext,
+  useEffect,
+  dropEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} = require('augmentor');
+
 const {registry, replace} = require('./utils.js');
+
+const hooks = {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+};
 
 const {
   render: lighterRender,
@@ -52,7 +75,7 @@ const addInit = (prototype, properties, method) => {
 
 const augmented = Class => {
 
-  const {hooks, prototype} = Class;
+  const {prototype} = Class;
 
   const events = [];
   const properties = {
@@ -79,15 +102,19 @@ const augmented = Class => {
       value: handleEvent
     };
 
-  if (hooks) {
+  if ('render' in prototype && prototype.render.length) {
     const {oninit} = prototype;
     defineProperties(prototype, {
       oninit: {
         configurable,
         value() {
-          const hook = augmentor(this.render.bind(this));
+          const hook = augmentor(this.render.bind(this, hooks));
           this.render = hook;
-          this.addEventListener('disconnected', () => dropEffect(hook), false);
+          this.addEventListener(
+            'disconnected',
+            dropEffect.bind(null, hook),
+            false
+          );
           if (oninit)
             oninit.apply(this, arguments);
         }

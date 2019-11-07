@@ -69,7 +69,6 @@ const grabInfo = object => {
         name = 'tagName';
       case 'contains':
       case 'includes':
-      case 'hooks':
       case 'name':
       case 'booleanAttributes':
       case 'mappedAttributes':
@@ -251,13 +250,4 @@ export {
   ref, html, svg
 };
 
-export {
-  useCallback,
-  useContext, createContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState
-} from 'augmentor';
+export {createContext} from 'augmentor';

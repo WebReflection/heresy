@@ -1,7 +1,6 @@
-const {define, render, html, useState} = heresy;
+const {define, render, html} = heresy;
 
 define('Welcome', {
-  hooks: true,
   extends: 'element',
   style: comp => `
     ${comp} {
@@ -13,7 +12,7 @@ define('Welcome', {
       font-weight: normal;
     }`
   ,
-  render() {
+  render({useState}) {
     const [clicks, setState] = useState(0);
     this.html`Hello <u>${navigator.userAgent}</u>
     <hr/>
