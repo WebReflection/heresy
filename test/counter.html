@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="../index.js"></script>
+  <script>
+  this.onload = () => {
+    const {render} = heresy;
+
+    const Counter = {
+      extends: 'fragment',
+      render({useState}) {
+        const [value, update] = useState(0);
+        this.html`
+          You clicked ${value} times.
+          <br>
+          <button onclick=${() => update(value + 1)}>increment</button>
+        `;
+      }
+    };
+
+    render(document.body, Counter);
+
+  };
+  </script>
+</head>
+<body>
+  
+</body>
+</html>
