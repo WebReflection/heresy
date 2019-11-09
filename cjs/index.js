@@ -2,7 +2,16 @@
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
 
-const {Hole, augmented, lighterRender, secret, html, svg} = require('./augmented.js');
+const {
+  Hole,
+  augmented,
+  defineHook,
+  lighterRender,
+  secret,
+  html,
+  svg
+} = require('./augmented.js');
+
 const {
   extend,
   hash,
@@ -245,6 +254,7 @@ const setupIncludes = (Class, tagName, is, u) => {
   return details;
 };
 
+exports.defineHook = defineHook;
 exports.define = define;
 exports.render = render;
 exports.ref = ref;

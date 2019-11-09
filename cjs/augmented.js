@@ -250,6 +250,12 @@ const augmented = Class => {
     Class;
 };
 
+const defineHook = (name, hook) => {
+  if (name in hooks)
+    throw new Error('duplicated hook ' + name);
+  hooks[name] = hook(hooks);
+};
+
 const evt = type => new Event(type);
 
 const html = (...args) => new Hole('html', args);
@@ -284,6 +290,7 @@ const wrap = (self, type, wm) => (tpl, ...values) => {
 exports.Hole = Hole;
 exports.secret = secret;
 exports.augmented = augmented;
+exports.defineHook = defineHook;
 exports.lighterRender = lighterRender;
 exports.html = html;
 exports.svg = svg;

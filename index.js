@@ -2348,6 +2348,11 @@ var heresy = (function (document,exports) {
     }) : Class;
   };
 
+  var defineHook = function defineHook(name, hook) {
+    if (name in hooks$1) throw new Error('duplicated hook ' + name);
+    hooks$1[name] = hook(hooks$1);
+  };
+
   var evt = function evt(type) {
     return new Event$1(type);
   };
@@ -2705,6 +2710,7 @@ var heresy = (function (document,exports) {
 
   exports.createContext = createContext;
   exports.define = define;
+  exports.defineHook = defineHook;
   exports.html = html;
   exports.ref = ref;
   exports.render = render;

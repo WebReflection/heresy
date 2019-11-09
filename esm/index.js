@@ -1,7 +1,16 @@
 import WeakMap from '@ungap/weakmap';
 import hyphenized from 'hyphenizer';
 
-import {Hole, augmented, lighterRender, secret, html, svg} from './augmented.js';
+import {
+  Hole,
+  augmented,
+  defineHook,
+  lighterRender,
+  secret,
+  html,
+  svg
+} from './augmented.js';
+
 import {
   extend,
   hash,
@@ -244,6 +253,7 @@ const setupIncludes = (Class, tagName, is, u) => {
 };
 
 export {
+  defineHook,
   // specialized for both client and SSR, not needed within components
   define, render,
   // exact same heresy-ssr helpers, usable in any component

@@ -29,7 +29,54 @@ Borrowing concepts and patterns from various libraries, _heresy_ enables custom 
   * an ever available `comp.is` string (you won't believe it's not always an attribute if created procedurally via a registered class)
   * automatic, lazy `this.html` and `this.svg` template literal tags, to populate a component's content within its optionally, locally scoped defined elements
   * provides a simplified way to target rendered nodes through the React-like `ref()` utility
-  * **hooks** implemented via `render({useState, ...})` definition. If a render has an argument, it will contain all hooks exported from [augmentor](https://github.com/WebReflection/augmentor#readme). Import `createContext` from _heresy_, to be able to use `render({useContext})`.
+  * **hooks** implemented via `render({useState, ...})` definition. If a render has an argument, it will contain all hooks exported from [augmentor](https://github.com/WebReflection/augmentor#readme). Import `createContext` from _heresy_, to be able to use `render({useContext})`. Import `defineHook` to create custom hooks.
+
+
+### Custom hooks
+
+It is possible to define your own hooks through the `defineHook(name, fn)` utility.
+
+```js
+import {defineHook} from 'heresy';
+
+defineHook('useCounter', ({useRef}) => () => {
+  const counter = useRef(0);
+  return counter.current++;
+});
+
+// using the useCounter in a render
+const Comp = {
+  extends: 'span',
+  render({useCounter}) {
+    const count = useCounter();
+    this.textContent = count;
+  }
+};
+```
+
+Please note that name must be unique, so if you'd like to be sure there won't ever be conflicts, use a `Symbol` instead of a string.
+
+```js
+import {defineHook} from 'heresy';
+
+const uso = Symbol();
+
+defineHook(state, ({useState}) => () => {
+  const [current, update] = useState({});
+  return [current, newState => {
+    update({...current, ...newState})
+  }];
+});
+
+
+const Comp = {
+  extends: 'p',
+  render({[uso]: useStateObject}) {
+    const [state, update] = useStateObject();
+    // do something with the state
+  }
+};
+```
 
 
 ### Usage in a nutshell

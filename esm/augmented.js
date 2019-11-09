@@ -248,6 +248,12 @@ const augmented = Class => {
     Class;
 };
 
+const defineHook = (name, hook) => {
+  if (name in hooks)
+    throw new Error('duplicated hook ' + name);
+  hooks[name] = hook(hooks);
+};
+
 const evt = type => new Event(type);
 
 const html = (...args) => new Hole('html', args);
@@ -283,6 +289,7 @@ export {
   Hole,
   secret,
   augmented,
+  defineHook,
   lighterRender,
   html, svg
 };
