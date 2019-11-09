@@ -61,10 +61,10 @@ import {defineHook} from 'heresy';
 
 const uso = Symbol();
 
-defineHook(state, ({useState}) => () => {
+defineHook(uso, ({useState}) => () => {
   const [current, update] = useState({});
-  return [current, newState => {
-    update({...current, ...newState})
+  return [current, state => {
+    update({...current, ...state});
   }];
 });
 
