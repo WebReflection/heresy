@@ -3,6 +3,7 @@ test/
 _config.yml
 .DS_Store
 .gitignore
+.github/FUNDING.yml
 .travis.yml
 package-lock.json
 rollup.config.js
