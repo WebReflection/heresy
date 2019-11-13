@@ -29,7 +29,7 @@
     "@ungap/weakset": "^0.1.5",
     "augmentor": "^1.1.4",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^1.4.1"
+    "lighterhtml": "^2.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.7.2",
@@ -37,7 +37,7 @@
     "@ungap/degap": "^0.1.4",
     "ascjs": "^3.1.0",
     "drop-babel-typeof": "^1.0.3",
-    "rollup": "^1.26.3",
+    "rollup": "^1.27.0",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-includepaths": "^0.2.3",
     "rollup-plugin-node-resolve": "^5.2.0",
