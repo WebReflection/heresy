@@ -262,5 +262,6 @@ exports.html = html;
 exports.svg = svg;
 
 (m => {
+  exports.contextual = m.contextual;
   exports.createContext = m.createContext;
 })(require('augmentor'));

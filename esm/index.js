@@ -260,4 +260,4 @@ export {
   ref, html, svg
 };
 
-export {createContext} from 'augmentor';
+export {contextual, createContext} from 'augmentor';
