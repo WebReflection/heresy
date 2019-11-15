@@ -1780,6 +1780,9 @@ var heresy = (function (document,exports) {
   function different(value, i) {
     return value !== this[i];
   }
+  var isFunction = function isFunction(fn) {
+    return typeof fn === 'function';
+  };
 
   var compat = typeof cancelAnimationFrame === 'function';
   var cAF = compat ? cancelAnimationFrame : clearTimeout;
@@ -1828,12 +1831,12 @@ var heresy = (function (document,exports) {
         index = _current.index;
 
     if (stack.length <= index) {
-      stack[index] = typeof value === 'function' ? value() : value;
+      stack[index] = isFunction(value) ? value() : value;
       if (!updates.has(hook)) updates.set(hook, reraf());
     }
 
     return [stack[index], function (value) {
-      stack[index] = value;
+      stack[index] = isFunction(value) ? value(stack[index]) : value;
       updates.get(hook)(hook, null, args);
     }];
   };
@@ -1897,7 +1900,6 @@ var heresy = (function (document,exports) {
       if (index < stack.length) {
         var info = stack[index];
         var clean = info.clean,
-            invoke = info.invoke,
             update = info.update,
             values = info.values;
 
@@ -1909,13 +1911,13 @@ var heresy = (function (document,exports) {
             clean();
           }
 
+          var invoke = function invoke() {
+            info.clean = effect();
+          };
+
           if (sync) after.push(invoke);else update(invoke);
         }
       } else {
-        var _invoke = function _invoke() {
-          _info.clean = effect();
-        };
-
         if (!effects.has(hook)) effects.set(hook, {
           stack: [],
           update: reraf()
@@ -1923,13 +1925,17 @@ var heresy = (function (document,exports) {
         var details = effects.get(hook);
         var _info = {
           clean: null,
-          invoke: _invoke,
           stop: stop,
           update: details.update,
           values: guards
         };
         stack[index] = _info;
         details.stack.push(_info);
+
+        var _invoke = function _invoke() {
+          _info.clean = effect();
+        };
+
         if (sync) after.push(_invoke);else _info.stop = details.update(_invoke);
       }
     };
