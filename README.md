@@ -357,7 +357,7 @@ Instead of using a non standard indirection as JSX is, we can use the power of [
 
 The Custom Elements V1 API provides enough primitives to intercept any sort of attribute (i.e. the `props` in the example), but also react to events such `connectedCallback` or `disconnectedCallback` and `attributeChangedCallback`.
 
-Mixed up with built-in extends in a way that any component is a real thing on the DOM instead of a facade of itself, _herey_ makes the creation of apps, from simple to complex, a no-brainer: define the content through `this.html` or `this.svg` and that's it.
+Mixed up with built-in extends in a way that any component is a real thing on the DOM instead of a facade of itself, _heresy_ makes the creation of apps, from simple to complex, a no-brainer: define the content through `this.html` or `this.svg` and that's it.
 
 When any class is defined, it's not just necessarily a useless `HTMLElement`, it can be pretty much any kind of element.
 
