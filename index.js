@@ -852,6 +852,17 @@ var heresy = (function (document,exports) {
     return String(this).replace(/^\s+|\s+/g, '');
   };
 
+  /* istanbul ignore next */
+
+  var normalizeAttributes = UID_IE ? function (attributes, parts) {
+    var html = parts.join(' ');
+    return parts.slice.call(attributes, 0).sort(function (left, right) {
+      return html.indexOf(left.name) <= html.indexOf(right.name) ? -1 : 1;
+    });
+  } : function (attributes, parts) {
+    return parts.slice.call(attributes, 0);
+  };
+
   function find(node, path) {
     var length = path.length;
     var i = 0;
@@ -925,7 +936,7 @@ var heresy = (function (document,exports) {
     var cache = new Map$1();
     var attributes = node.attributes;
     var remove = [];
-    var array = remove.slice.call(attributes, 0);
+    var array = normalizeAttributes(attributes, parts);
     var length = array.length;
     var i = 0;
 
@@ -941,13 +952,7 @@ var heresy = (function (document,exports) {
         /* istanbul ignore else */
 
         if (!cache.has(name)) {
-          var realName = parts.shift().replace(direct ? /^(?:|[\S\s]*?\s)(\S+?)\s*=\s*('|")?$/ : // TODO: while working on yet another IE/Edge bug I've realized
-          //        the current not direct logic easily breaks there
-          //        because the `name` might not be the real needed one.
-          //        Use a better RegExp to find last attribute instead
-          //        of trusting `name` is what we are looking for.
-          //        Thanks IE/Edge, I hate you both.
-          new RegExp('^(?:|[\\S\\s]*?\\s)(' + name + ')\\s*=\\s*(\'|")[\\S\\s]*', 'i'), '$1');
+          var realName = parts.shift().replace(direct ? /^(?:|[\S\s]*?\s)(\S+?)\s*=\s*('|")?$/ : new RegExp('^(?:|[\\S\\s]*?\\s)(' + name + ')\\s*=\\s*(\'|")[\\S\\s]*', 'i'), '$1');
           var value = attributes[realName] || // the following ignore is covered by browsers
           // while basicHTML is already case-sensitive
 
@@ -1743,26 +1748,16 @@ var heresy = (function (document,exports) {
 
   /*! (c) Andrea Giammarchi - ISC */
   var curr = null;
-
-  var invoke$1 = function invoke(fn) {
-    fn();
-  };
-
   var augmentor = function augmentor(fn) {
     var stack = [];
     return function hook() {
       var prev = curr;
       var after = [];
-      var i = 0;
       curr = {
         hook: hook,
         args: arguments,
         stack: stack,
-
-        get index() {
-          return i++;
-        },
-
+        i: 0,
         after: after
       };
 
@@ -1770,7 +1765,10 @@ var heresy = (function (document,exports) {
         return fn.apply(null, arguments);
       } finally {
         curr = prev;
-        after.forEach(invoke$1);
+
+        for (var i = 0, length = after.length; i < length; i++) {
+          after[i]();
+        }
       }
     };
   };
@@ -1833,28 +1831,45 @@ var heresy = (function (document,exports) {
 
   /*! (c) Andrea Giammarchi - ISC */
   var updates = new WeakMap();
-  var useState = function useState(value) {
-    var _current = current(),
-        hook = _current.hook,
-        args = _current.args,
-        stack = _current.stack,
-        index = _current.index;
 
-    if (stack.length <= index) {
-      stack[index] = isFunction(value) ? value() : value;
-      if (!updates.has(hook)) updates.set(hook, reraf());
+  var update = function update(hook, ctx, args) {
+    hook.apply(ctx, args);
+  };
+
+  var defaults = {
+    sync: false,
+    always: false
+  };
+  var useState = function useState(value, options) {
+    var state = current();
+    var i = state.i++;
+    var hook = state.hook,
+        args = state.args,
+        stack = state.stack;
+
+    var _ref = options || defaults,
+        sync = _ref.sync,
+        always = _ref.always;
+
+    if (stack.length <= i) {
+      stack[i] = isFunction(value) ? value() : value;
+      if (!updates.has(hook)) updates.set(hook, sync ? update : reraf());
     }
 
-    return [stack[index], function (value) {
-      stack[index] = isFunction(value) ? value(stack[index]) : value;
-      updates.get(hook)(hook, null, args);
+    return [stack[i], function (value) {
+      var newValue = isFunction(value) ? value(stack[i]) : value;
+
+      if (always || stack[i] !== newValue) {
+        stack[i] = newValue;
+        updates.get(hook)(hook, null, args);
+      }
     }];
   };
 
   /*! (c) Andrea Giammarchi - ISC */
   var hooks = new WeakMap();
 
-  var invoke$2 = function invoke(_ref) {
+  var invoke$1 = function invoke(_ref) {
     var hook = _ref.hook,
         args = _ref.args;
     hook.apply(null, args);
@@ -1878,18 +1893,18 @@ var heresy = (function (document,exports) {
       hook: hook,
       args: args
     };
-    if (!stack.some(update, info)) stack.push(info);
+    if (!stack.some(update$1, info)) stack.push(info);
     return context.value;
   };
 
   function provide(value) {
     if (this.value !== value) {
       this.value = value;
-      hooks.get(this).forEach(invoke$2);
+      hooks.get(this).forEach(invoke$1);
     }
   }
 
-  function update(_ref2) {
+  function update$1(_ref2) {
     var hook = _ref2.hook;
     return hook === this.hook;
   }
@@ -1901,14 +1916,14 @@ var heresy = (function (document,exports) {
 
   var createEffect = function createEffect(sync) {
     return function (effect, guards) {
-      var _current = current(),
-          hook = _current.hook,
-          stack = _current.stack,
-          index = _current.index,
-          after = _current.after;
+      var state = current();
+      var i = state.i++;
+      var hook = state.hook,
+          stack = state.stack,
+          after = state.after;
 
-      if (index < stack.length) {
-        var info = stack[index];
+      if (i < stack.length) {
+        var info = stack[i];
         var clean = info.clean,
             update = info.update,
             values = info.values;
@@ -1939,7 +1954,7 @@ var heresy = (function (document,exports) {
           update: details.update,
           values: guards
         };
-        stack[index] = _info;
+        stack[i] = _info;
         details.stack.push(_info);
 
         var _invoke = function _invoke() {
@@ -1968,15 +1983,14 @@ var heresy = (function (document,exports) {
 
   /*! (c) Andrea Giammarchi - ISC */
   var useMemo = function useMemo(memo, guards) {
-    var _current = current(),
-        stack = _current.stack,
-        index = _current.index;
-
-    if (!guards || stack.length <= index || guards.some(different, stack[index].values)) stack[index] = {
+    var state = current();
+    var i = state.i++;
+    var stack = state.stack;
+    if (!guards || stack.length <= i || guards.some(different, stack[i].values)) stack[i] = {
       current: memo(),
       values: guards
     };
-    return stack[index].current;
+    return stack[i].current;
   };
   var useCallback = function useCallback(fn, guards) {
     return useMemo(function () {
@@ -1985,9 +1999,10 @@ var heresy = (function (document,exports) {
   };
 
   /*! (c) Andrea Giammarchi - ISC */
-  var useReducer = function useReducer(reducer, value, init) {
-    // avoid Babel destructuring bloat
-    var pair = useState(init ? init(value) : value);
+  var useReducer = function useReducer(reducer, value, init, options) {
+    var fn = typeof init === 'function'; // avoid `cons [state, update] = ...` Babel destructuring bloat
+
+    var pair = useState(fn ? init(value) : value, fn ? options : init);
     return [pair[0], function (value) {
       pair[1](reducer(pair[0], value));
     }];
@@ -1995,11 +2010,10 @@ var heresy = (function (document,exports) {
 
   /*! (c) Andrea Giammarchi - ISC */
   var useRef = function useRef(value) {
-    var _current = current(),
-        stack = _current.stack,
-        index = _current.index;
-
-    return index < stack.length ? stack[index] : stack[index] = {
+    var state = current();
+    var i = state.i++;
+    var stack = state.stack;
+    return i < stack.length ? stack[i] : stack[i] = {
       current: value
     };
   };
