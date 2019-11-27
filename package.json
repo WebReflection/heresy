@@ -29,15 +29,15 @@
     "@ungap/weakset": "^0.1.5",
     "augmentor": "^1.4.0",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^2.0.3"
+    "lighterhtml": "^2.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",
     "@babel/preset-env": "^7.7.4",
     "@ungap/degap": "^0.1.4",
-    "ascjs": "^3.1.0",
+    "ascjs": "^3.1.2",
     "drop-babel-typeof": "^1.0.3",
-    "rollup": "^1.27.4",
+    "rollup": "^1.27.5",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-includepaths": "^0.2.3",
     "rollup-plugin-node-resolve": "^5.2.0",

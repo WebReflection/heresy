@@ -389,55 +389,6 @@ var heresy = (function (document,exports) {
     }
   }(document);
 
-  /*! (c) Andrea Giammarchi - ISC */
-  var self$3 = null ||
-  /* istanbul ignore next */
-  {};
-
-  try {
-    self$3.Map = Map;
-  } catch (Map) {
-    self$3.Map = function Map() {
-      var i = 0;
-      var k = [];
-      var v = [];
-      return {
-        "delete": function _delete(key) {
-          var had = contains(key);
-
-          if (had) {
-            k.splice(i, 1);
-            v.splice(i, 1);
-          }
-
-          return had;
-        },
-        forEach: function forEach(callback, context) {
-          k.forEach(function (key, i) {
-            callback.call(context, v[i], key, this);
-          }, this);
-        },
-        get: function get(key) {
-          return contains(key) ? v[i] : void 0;
-        },
-        has: function has(key) {
-          return contains(key);
-        },
-        set: function set(key, value) {
-          v[contains(key) ? i : k.push(key) - 1] = value;
-          return this;
-        }
-      };
-
-      function contains(v) {
-        i = k.indexOf(v);
-        return -1 < i;
-      }
-    };
-  }
-
-  var Map$1 = self$3.Map;
-
   var iOF = [].indexOf;
   var append = function append(get, parent, children, start, end, before) {
     var isSelect = 'selectedIndex' in parent;
@@ -519,23 +470,20 @@ var heresy = (function (document,exports) {
       tresh[i] = currentEnd;
     }
 
-    var keymap = new Map$1();
+    var nodes = currentNodes.slice(currentStart, currentEnd);
 
-    for (var _i = currentStart; _i < currentEnd; _i++) {
-      keymap.set(currentNodes[_i], _i);
-    }
+    for (var _i = futureStart; _i < futureEnd; _i++) {
+      var index = nodes.indexOf(futureNodes[_i]);
 
-    for (var _i2 = futureStart; _i2 < futureEnd; _i2++) {
-      var idxInOld = keymap.get(futureNodes[_i2]);
-
-      if (idxInOld != null) {
+      if (-1 < index) {
+        var idxInOld = index + currentStart;
         k = findK(tresh, minLen, idxInOld);
         /* istanbul ignore else */
 
         if (-1 < k) {
           tresh[k] = idxInOld;
           link[k] = {
-            newi: _i2,
+            newi: _i,
             oldi: idxInOld,
             prev: link[k - 1]
           };
@@ -660,7 +608,7 @@ var heresy = (function (document,exports) {
   };
 
   var applyDiff = function applyDiff(diff, get, parentNode, futureNodes, futureStart, currentNodes, currentStart, currentLength, before) {
-    var live = new Map$1();
+    var live = [];
     var length = diff.length;
     var currentIndex = currentStart;
     var i = 0;
@@ -674,7 +622,7 @@ var heresy = (function (document,exports) {
 
         case INSERTION:
           // TODO: bulk appends for sequential nodes
-          live.set(futureNodes[futureStart], 1);
+          live.push(futureNodes[futureStart]);
           append(get, parentNode, futureNodes, futureStart++, futureStart, currentIndex < currentLength ? get(currentNodes[currentIndex], 0) : before);
           break;
 
@@ -694,7 +642,7 @@ var heresy = (function (document,exports) {
 
         case DELETION:
           // TODO: bulk removes for sequential nodes
-          if (live.has(currentNodes[currentStart])) currentStart++;else remove(get, currentNodes, currentStart++, currentStart);
+          if (-1 < live.indexOf(currentNodes[currentStart])) currentStart++;else remove(get, currentNodes, currentStart++, currentStart);
           break;
       }
     }
@@ -933,8 +881,8 @@ var heresy = (function (document,exports) {
   }
 
   function parseAttributes(node, holes, parts, path) {
-    var cache = new Map$1();
     var attributes = node.attributes;
+    var cache = [];
     var remove = [];
     var array = normalizeAttributes(attributes, parts);
     var length = array.length;
@@ -951,14 +899,14 @@ var heresy = (function (document,exports) {
 
         /* istanbul ignore else */
 
-        if (!cache.has(name)) {
+        if (cache.indexOf(name) < 0) {
+          cache.push(name);
           var realName = parts.shift().replace(direct ? /^(?:|[\S\s]*?\s)(\S+?)\s*=\s*('|")?$/ : new RegExp('^(?:|[\\S\\s]*?\\s)(' + name + ')\\s*=\\s*(\'|")[\\S\\s]*', 'i'), '$1');
           var value = attributes[realName] || // the following ignore is covered by browsers
           // while basicHTML is already case-sensitive
 
           /* istanbul ignore next */
           attributes[realName.toLowerCase()];
-          cache.set(name, value);
           if (direct) holes.push(Attr(value, path, realName, null));else {
             var skip = sparse.length - 2;
 
@@ -1046,7 +994,6 @@ var heresy = (function (document,exports) {
 
   // globals
   var parsed = new WeakMap$1();
-  var referenced = new WeakMap$1();
 
   function createInfo(options, template) {
     var markup = (options.convert || domsanitizer)(template);
@@ -1141,22 +1088,17 @@ var heresy = (function (document,exports) {
 
   function createDetails(options, template) {
     var info = parsed.get(template) || createInfo(options, template);
-    var content = importNode.call(document, info.content, true);
-    var details = {
-      content: content,
-      template: template,
-      updates: info.updates(content)
-    };
-    referenced.set(options, details);
-    return details;
+    return info.updates(importNode.call(document, info.content, true));
   }
 
+  var empty = [];
+
   function domtagger(options) {
+    var previous = empty;
+    var updates = cleanContent;
     return function (template) {
-      var details = referenced.get(options);
-      if (details == null || details.template !== template) details = createDetails(options, template);
-      details.updates.apply(null, arguments);
-      return details.content;
+      if (previous !== template) updates = createDetails(options, previous = template);
+      return updates.apply(null, arguments);
     };
   }
 
