@@ -29,7 +29,7 @@
     "@ungap/weakset": "^0.1.5",
     "augmentor": "^1.4.0",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^2.0.6"
+    "lighterhtml": "^2.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",
