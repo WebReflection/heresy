@@ -27,7 +27,7 @@
     "@ungap/template-literal": "^0.4.1",
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
-    "augmentor": "^1.4.0",
+    "augmentor": "^2.0.0",
     "hyphenizer": "^0.1.1",
     "lighterhtml": "^2.0.7"
   },
