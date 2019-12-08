@@ -1860,12 +1860,9 @@ var heresy = (function (document,exports) {
   var stop = function stop() {};
 
   var setFX = function setFX(hook) {
-    var details = {
-      stack: [],
-      update: reraf()
-    };
-    effects.set(hook, details);
-    return details;
+    var stack = [];
+    effects.set(hook, stack);
+    return stack;
   };
 
   var createEffect = function createEffect(sync) {
@@ -1899,21 +1896,22 @@ var heresy = (function (document,exports) {
           if (sync) after.push(_invoke);else _update(_invoke);
         }
       } else {
-        var details = effects.get(hook) || setFX(hook);
+        var _update2 = sync ? stop : reraf();
+
         var _info = {
           clean: null,
           stop: stop,
-          update: details.update,
+          update: _update2,
           values: guards
         };
         state.length = stack.push(_info);
-        details.stack.push(_info);
+        (effects.get(hook) || setFX(hook)).push(_info);
 
         var _invoke2 = function _invoke2() {
           _info.clean = effect();
         };
 
-        if (sync) after.push(_invoke2);else _info.stop = details.update(_invoke2);
+        if (sync) after.push(_invoke2);else _info.stop = _update2(_invoke2);
       }
     };
   };
@@ -1921,8 +1919,7 @@ var heresy = (function (document,exports) {
   var useEffect = createEffect(false);
   var useLayoutEffect = createEffect(true);
   var dropEffect = function dropEffect(hook) {
-    var fx = effects.get(hook);
-    if (fx) fx.stack.forEach(function (info) {
+    (effects.get(hook) || []).forEach(function (info) {
       var clean = info.clean,
           stop = info.stop;
       stop();
