@@ -1617,7 +1617,8 @@ var heresy = (function (document,exports) {
         iLength = counter.iLength;
     var type = hole.type,
         args = hole.args;
-    if (i === iLength) counter.iLength = stack.push({
+    var unknown = i === iLength;
+    if (unknown) counter.iLength = stack.push({
       type: type,
       id: args[0],
       tag: null,
@@ -1626,12 +1627,14 @@ var heresy = (function (document,exports) {
     counter.i++;
     unrollArray(Tagger, info, args, counter);
     var entry = stack[i];
-    if (i < iLength && entry.id === args[0] && entry.type === type) entry.tag.apply(null, args);else {
+
+    if (unknown || entry.id !== args[0] || entry.type !== type) {
       entry.type = type;
       entry.id = args[0];
       entry.tag = new Tagger(type);
       entry.wire = wiredContent(entry.tag.apply(null, args));
-    }
+    } else entry.tag.apply(null, args);
+
     return entry.wire;
   };
 
@@ -1755,8 +1758,7 @@ var heresy = (function (document,exports) {
       return fn.apply(context, arguments);
     });
     return function () {
-      context = this;
-      return augmented.apply(this, arguments);
+      return augmented.apply(context = this, arguments);
     };
   }; // useState
 
@@ -1777,11 +1779,11 @@ var heresy = (function (document,exports) {
     always: false
   };
   var useState = function useState(value, options) {
+    var i = state.i++;
     var _state = state,
         hook = _state.hook,
         args = _state.args,
         stack = _state.stack,
-        i = _state.i,
         length = _state.length;
 
     var _ref = options || defaults,
@@ -1792,7 +1794,7 @@ var heresy = (function (document,exports) {
       $: typeof value === 'function' ? value() : value,
       _: asy ? updates.get(hook) || setRaf(hook) : hookdate
     });
-    var ref = stack[state.i++];
+    var ref = stack[i];
     return [ref.$, function (value) {
       var $value = typeof value === 'function' ? value(ref.$) : value;
 
@@ -1852,7 +1854,7 @@ var heresy = (function (document,exports) {
   function update(_ref3) {
     var hook = _ref3.hook;
     return hook === this.hook;
-  } // useEffect, useLayoutEffect, dropEffect
+  } // dropEffect, hasEffect, useEffect, useLayoutEffect
 
 
   var effects = new WeakMap();
@@ -1865,24 +1867,25 @@ var heresy = (function (document,exports) {
     return stack;
   };
 
-  var createEffect = function createEffect(sync) {
+  var createEffect = function createEffect(asy) {
     return function (effect, guards) {
+      var i = state.i++;
       var _state3 = state,
           hook = _state3.hook,
           after = _state3.after,
           stack = _state3.stack,
-          i = _state3.i,
           length = _state3.length;
-      state.i++;
 
       if (i < length) {
         var info = stack[i];
-        var clean = info.clean,
-            _update = info.update,
-            values = info.values;
+        var _update = info.update,
+            values = info.values,
+            _stop = info.stop;
 
         if (!guards || guards.some(different, values)) {
           info.values = guards;
+          if (asy) _stop(asy);
+          var clean = info.clean;
 
           if (clean) {
             info.clean = null;
@@ -1893,16 +1896,16 @@ var heresy = (function (document,exports) {
             info.clean = effect();
           };
 
-          if (sync) after.push(_invoke);else _update(_invoke);
+          if (asy) _update(_invoke);else after.push(_invoke);
         }
       } else {
-        var _update2 = sync ? stop : reraf();
+        var _update2 = asy ? reraf() : stop;
 
         var _info = {
           clean: null,
-          stop: stop,
           update: _update2,
-          values: guards
+          values: guards,
+          stop: stop
         };
         state.length = stack.push(_info);
         (effects.get(hook) || setFX(hook)).push(_info);
@@ -1911,13 +1914,11 @@ var heresy = (function (document,exports) {
           _info.clean = effect();
         };
 
-        if (sync) after.push(_invoke2);else _info.stop = _update2(_invoke2);
+        if (asy) _info.stop = _update2(_invoke2);else after.push(_invoke2);
       }
     };
   };
 
-  var useEffect = createEffect(false);
-  var useLayoutEffect = createEffect(true);
   var dropEffect = function dropEffect(hook) {
     (effects.get(hook) || []).forEach(function (info) {
       var clean = info.clean,
@@ -1930,12 +1931,14 @@ var heresy = (function (document,exports) {
       }
     });
   };
-  var hasEffect = effects.has.bind(effects); // useMemo, useCallback
+  var hasEffect = effects.has.bind(effects);
+  var useEffect = createEffect(true);
+  var useLayoutEffect = createEffect(false); // useMemo, useCallback
 
   var useMemo = function useMemo(memo, guards) {
+    var i = state.i++;
     var _state4 = state,
         stack = _state4.stack,
-        i = _state4.i,
         length = _state4.length;
     if (i === length) state.length = stack.push({
       $: memo(),
@@ -1944,7 +1947,7 @@ var heresy = (function (document,exports) {
       $: memo(),
       _: guards
     };
-    return stack[state.i++].$;
+    return stack[i].$;
   };
   var useCallback = function useCallback(fn, guards) {
     return useMemo(function () {
@@ -1953,14 +1956,14 @@ var heresy = (function (document,exports) {
   }; // useRef
 
   var useRef = function useRef(value) {
+    var i = state.i++;
     var _state5 = state,
         stack = _state5.stack,
-        i = _state5.i,
         length = _state5.length;
     if (i === length) state.length = stack.push({
       current: value
     });
-    return stack[state.i++];
+    return stack[i];
   };
 
   function different(value, i) {
