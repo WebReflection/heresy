@@ -1753,12 +1753,21 @@ var heresy = (function (document,exports) {
     };
   };
   var contextual = function contextual(fn) {
+    var check = true;
     var context = null;
     var augmented = augmentor(function () {
       return fn.apply(context, arguments);
     });
-    return function () {
-      return augmented.apply(context = this, arguments);
+    return function hook() {
+      var result = augmented.apply(context = this, arguments); // perform hasEffect check only once
+
+      if (check) {
+        check = !check; // and copy same Array if any FX was used
+
+        if (hasEffect(augmented)) effects.set(hook, effects.get(augmented));
+      }
+
+      return result;
     };
   }; // useState
 
