@@ -37,6 +37,7 @@ const HTML = {
 const cc = new WeakMap;
 const dc = new WeakMap;
 const oc = new WeakMap;
+const fragments = new WeakMap;
 
 const info = (tagName, is) => ({tagName, is, element: tagName === 'element'});
 
@@ -111,8 +112,8 @@ const ref = (self, name) => self ?
   {current: null};
 
 const register = ($, definition, uid) => {
-
-  if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:._-]+)>|:([A-Za-z0-9:._-]+))?$/.test($))
+  const validName = /^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:._-]+)>|:([A-Za-z0-9:._-]+))?$/;
+  if (!validName.test($))
     throw 'Invalid name';
 
   const {$1: name, $3: asTag, $4: asColon} = RegExp;
@@ -178,10 +179,16 @@ const register = ($, definition, uid) => {
           if (render)
             render.apply(this, arguments);
           if (this.parentNode) {
-            const range = document.createRange();
-            range.setStartBefore(this.firstChild);
-            range.setEndAfter(this.lastChild);
-            this.parentNode.replaceChild(range.extractContents(), this);
+            const {firstChild} = this;
+            let contents = null;
+            if (firstChild) {
+              const range = document.createRange();
+              range.setStartBefore(firstChild);
+              range.setEndAfter(this.lastChild);
+              contents = range.extractContents();
+            }
+            else
+              this.parentNode.removeChild(this);
           }
         }
       }

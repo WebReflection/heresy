@@ -2397,6 +2397,7 @@ var heresy = (function (document,exports) {
   var cc = new WeakMap$1();
   var dc = new WeakMap$1();
   var oc = new WeakMap$1();
+  var fragments = new WeakMap$1();
 
   var info = function info(tagName, is) {
     return {
@@ -2482,7 +2483,8 @@ var heresy = (function (document,exports) {
   var register = function register($, definition, uid) {
     var _customElements;
 
-    if (!/^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:._-]+)>|:([A-Za-z0-9:._-]+))?$/.test($)) throw 'Invalid name';
+    var validName = /^([A-Z][A-Za-z0-9_]*)(<([A-Za-z0-9:._-]+)>|:([A-Za-z0-9:._-]+))?$/;
+    if (!validName.test($)) throw 'Invalid name';
     var name = RegExp.$1,
         asTag = RegExp.$3,
         asColon = RegExp.$4;
@@ -2535,10 +2537,15 @@ var heresy = (function (document,exports) {
           if (_render) _render.apply(this, arguments);
 
           if (this.parentNode) {
-            var range = document.createRange();
-            range.setStartBefore(this.firstChild);
-            range.setEndAfter(this.lastChild);
-            this.parentNode.replaceChild(range.extractContents(), this);
+            var firstChild = this.firstChild;
+            var contents = null;
+
+            if (firstChild) {
+              var range = document.createRange();
+              range.setStartBefore(firstChild);
+              range.setEndAfter(this.lastChild);
+              contents = range.extractContents();
+            } else this.parentNode.removeChild(this);
           }
         }
       });
