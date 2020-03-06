@@ -1298,10 +1298,11 @@ var heresy = (function (document,exports) {
     var type = name.slice(2);
     if (name.toLowerCase() in node) type = type.toLowerCase();
     return function (newValue) {
-      if (oldValue !== newValue) {
-        if (oldValue) node.removeEventListener(type, oldValue, false);
-        oldValue = newValue;
-        if (newValue) node.addEventListener(type, newValue, false);
+      var info = isArray(newValue) ? newValue : [newValue, false];
+
+      if (oldValue !== info[0]) {
+        if (oldValue) node.removeEventListener(type, oldValue, info[1]);
+        if (oldValue = info[0]) node.addEventListener(type, oldValue, info[1]);
       }
     };
   }; // special attributes helpers
@@ -1534,7 +1535,7 @@ var heresy = (function (document,exports) {
       render: function render(where, what) {
         var hole = typeof what === 'function' ? what() : what;
         var info = cache.get(where) || setCache(where);
-        var wire = hole instanceof Hole ? retrieve(Tagger, info, hole) : hole;
+        var wire = hole instanceof LighterHole ? retrieve(Tagger, info, hole) : hole;
 
         if (wire !== info.wire) {
           info.wire = wire;
@@ -1582,7 +1583,7 @@ var heresy = (function (document,exports) {
     return hole;
 
     function hole() {
-      return new Hole(type, tta.apply(null, arguments));
+      return new LighterHole(type, tta.apply(null, arguments));
     }
   };
 
@@ -1643,11 +1644,11 @@ var heresy = (function (document,exports) {
       var hole = args[i];
 
       if (typeof(hole) === 'object' && hole) {
-        if (hole instanceof Hole) args[i] = unroll(Tagger, info, hole, counter);else if (isArray(hole)) {
+        if (hole instanceof LighterHole) args[i] = unroll(Tagger, info, hole, counter);else if (isArray(hole)) {
           for (var _i = 0, _length = hole.length; _i < _length; _i++) {
             var inner = hole[_i];
 
-            if (typeof(inner) === 'object' && inner && inner instanceof Hole) {
+            if (typeof(inner) === 'object' && inner && inner instanceof LighterHole) {
               var sub = info.sub;
               var a = counter.a,
                   aLength = counter.aLength;
@@ -1667,11 +1668,13 @@ var heresy = (function (document,exports) {
     return length === 1 ? childNodes[0] : length ? new Wire(childNodes) : node;
   };
 
-  freeze(Hole);
-  function Hole(type, args) {
+  freeze(LighterHole);
+
+  function LighterHole(type, args) {
     this.type = type;
     this.args = args;
   }
+  var Hole = LighterHole;
   var custom = function custom(overrides) {
     var prototype = create(tProto);
     keys(overrides).forEach(function (key) {
@@ -1988,9 +1991,7 @@ var heresy = (function (document,exports) {
   } catch ($) {}
 
   var extend = function extend(Super) {
-    return (
-      /*#__PURE__*/
-      function (_Super) {
+    return (/*#__PURE__*/function (_Super) {
         _inherits(_class, _Super);
 
         function _class() {
