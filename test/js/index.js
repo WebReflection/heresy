@@ -82,7 +82,7 @@ setTimeout(() => {
         button.props = {name: this.value};
     },
     render() {
-      this.html`<Div/><MyButton ref=${ref(this, 'button')} props=${{name: this.value}}/>`;
+      this.html`<Div /><MyButton ref=${ref(this, 'button')} props=${{name: this.value}} />`;
     }
   };
   // return render(document.body, Outer);

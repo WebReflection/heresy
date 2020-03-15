@@ -186,9 +186,8 @@ const register = ($, definition, uid) => {
               range.setStartBefore(firstChild);
               range.setEndAfter(this.lastChild);
               contents = range.extractContents();
+              this.parentNode.replaceChild(contents, this);
             }
-            else
-              this.parentNode.removeChild(this);
           }
         }
       }

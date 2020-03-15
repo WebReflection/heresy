@@ -27,9 +27,9 @@
     "@ungap/template-literal": "^0.4.1",
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
-    "augmentor": "^2.1.5",
+    "augmentor": "^2.1.6",
     "hyphenizer": "^0.1.1",
-    "lighterhtml": "^2.1.0"
+    "lighterhtml": "^2.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
@@ -37,11 +37,11 @@
     "@ungap/degap": "^0.1.7",
     "ascjs": "^3.1.2",
     "drop-babel-typeof": "^1.0.3",
-    "rollup": "^2.0.0-2",
-    "rollup-plugin-babel": "^4.3.3",
+    "rollup": "^2.0.6",
+    "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-includepaths": "^0.2.3",
     "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-terser": "^5.2.0",
+    "rollup-plugin-terser": "^5.3.0",
     "uglify-es": "^3.3.9"
   },
   "repository": {
