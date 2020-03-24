@@ -171,9 +171,9 @@ var heresy = (function (document,exports) {
 
   var WeakMap$1 = self.WeakMap;
 
-  function hyphenizer(s, c) {
-    return s.replace(/([A-Z])([A-Z][a-z])/g, c = '$1' + (c || '-') + '$2').replace(/([a-z])([A-Z])/g, c).toLowerCase();
-  }
+  var uhyphen = (function (camel) {
+    return camel.replace(/(([A-Z0-9])([A-Z0-9][a-z]))|(([a-z])([A-Z]))/g, '$2$5-$3$6').toLowerCase();
+  });
 
   /*! (c) Andrea Giammarchi - ISC */
   var self$1 = null ||
@@ -2451,7 +2451,7 @@ var heresy = (function (document,exports) {
     var suffix = '';
 
     if (tagName.indexOf('-') < 0) {
-      hyphenizedName = hyphenizer(name) + uid;
+      hyphenizedName = uhyphen(name) + uid;
       if (hyphenizedName.indexOf('-') < 0) suffix = '-heresy';
     } else {
       hyphenizedName = tagName + uid;

@@ -1,6 +1,6 @@
 'use strict';
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
-const hyphenized = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('hyphenizer'));
+const uhyphen = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('uhyphen'));
 
 const {
   Hole,
@@ -134,7 +134,7 @@ const register = ($, definition, uid) => {
   let hyphenizedName = '';
   let suffix = '';
   if (tagName.indexOf('-') < 0) {
-    hyphenizedName = hyphenized(name) + uid;
+    hyphenizedName = uhyphen(name) + uid;
     if (hyphenizedName.indexOf('-') < 0)
       suffix = '-heresy';
   }

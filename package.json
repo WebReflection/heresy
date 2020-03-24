@@ -28,8 +28,8 @@
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
     "augmentor": "^2.1.6",
-    "hyphenizer": "^0.1.1",
-    "lighterhtml": "^2.5.0"
+    "lighterhtml": "^2.5.0",
+    "uhyphen": "^0.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",

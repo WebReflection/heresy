@@ -1,5 +1,5 @@
 import WeakMap from '@ungap/weakmap';
-import hyphenized from 'hyphenizer';
+import uhyphen from 'uhyphen';
 
 import {
   Hole,
@@ -132,7 +132,7 @@ const register = ($, definition, uid) => {
   let hyphenizedName = '';
   let suffix = '';
   if (tagName.indexOf('-') < 0) {
-    hyphenizedName = hyphenized(name) + uid;
+    hyphenizedName = uhyphen(name) + uid;
     if (hyphenizedName.indexOf('-') < 0)
       suffix = '-heresy';
   }
