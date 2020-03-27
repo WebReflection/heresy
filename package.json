@@ -28,7 +28,7 @@
     "@ungap/weakmap": "^0.1.4",
     "@ungap/weakset": "^0.1.5",
     "augmentor": "^2.1.6",
-    "lighterhtml": "^2.5.0",
+    "lighterhtml": "^3.0.0",
     "uhyphen": "^0.1.0"
   },
   "devDependencies": {
