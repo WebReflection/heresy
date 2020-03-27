@@ -40,6 +40,19 @@ var heresy = (function (document,exports) {
     return _setPrototypeOf(o, p);
   }
 
+  function _isNativeReflectConstruct() {
+    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+    if (Reflect.construct.sham) return false;
+    if (typeof Proxy === "function") return true;
+
+    try {
+      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function _assertThisInitialized(self) {
     if (self === void 0) {
       throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -56,20 +69,33 @@ var heresy = (function (document,exports) {
     return _assertThisInitialized(self);
   }
 
+  function _createSuper(Derived) {
+    return function () {
+      var Super = _getPrototypeOf(Derived),
+          result;
+
+      if (_isNativeReflectConstruct()) {
+        var NewTarget = _getPrototypeOf(this).constructor;
+
+        result = Reflect.construct(Super, arguments, NewTarget);
+      } else {
+        result = Super.apply(this, arguments);
+      }
+
+      return _possibleConstructorReturn(this, result);
+    };
+  }
+
   function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
   }
 
   function _toConsumableArray(arr) {
-    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
 
   function _arrayWithoutHoles(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-      return arr2;
-    }
+    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
 
   function _arrayWithHoles(arr) {
@@ -77,14 +103,11 @@ var heresy = (function (document,exports) {
   }
 
   function _iterableToArray(iter) {
-    if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
   }
 
   function _iterableToArrayLimit(arr, i) {
-    if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
-      return;
-    }
-
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
     var _arr = [];
     var _n = true;
     var _d = false;
@@ -110,12 +133,29 @@ var heresy = (function (document,exports) {
     return _arr;
   }
 
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
   function _nonIterableSpread() {
-    throw new TypeError("Invalid attempt to spread non-iterable instance");
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   /*! (c) Andrea Giammarchi - ISC */
@@ -424,7 +464,7 @@ var heresy = (function (document,exports) {
 
     var FRAGMENT = 'fragment';
     var TEMPLATE = 'template';
-    var HAS_CONTENT = 'content' in create(TEMPLATE);
+    var HAS_CONTENT = ('content' in create(TEMPLATE));
     var createHTML = HAS_CONTENT ? function (html) {
       var template = create(TEMPLATE);
       template.innerHTML = html;
@@ -475,7 +515,7 @@ var heresy = (function (document,exports) {
   }(document);
 
   var append = function append(get, parent, children, start, end, before) {
-    var isSelect = 'selectedIndex' in parent;
+    var isSelect = ('selectedIndex' in parent);
     var noSelection = isSelect;
 
     while (start < end) {
@@ -859,7 +899,7 @@ var heresy = (function (document,exports) {
 
   /*! (c) Andrea Giammarchi - ISC */
   var importNode = function (document, appendChild, cloneNode, createTextNode, importNode) {
-    var _native = importNode in document; // IE 11 has problems with cloning templates:
+    var _native = (importNode in document); // IE 11 has problems with cloning templates:
     // it "forgets" empty childNodes. This feature-detects that.
 
 
@@ -1280,40 +1320,49 @@ var heresy = (function (document,exports) {
     }
   }();
 
-  var hyperAttribute = function hyperAttribute(node, original) {
-    var oldValue;
-    var owner = false;
-    var attribute = original.cloneNode(true);
+  var aria = function aria(node) {
+    return function (value) {
+      for (var key in value) {
+        node.setAttribute(key === 'role' ? key : "aria-".concat(key), value[key]);
+      }
+    };
+  };
+  var attribute = function attribute(node, name) {
+    var oldValue,
+        orphan = true;
+    var attributeNode = document.createAttribute(name);
     return function (newValue) {
       if (oldValue !== newValue) {
         oldValue = newValue;
 
-        if (attribute.value !== newValue) {
-          if (newValue == null) {
-            if (owner) {
-              owner = false;
-              node.removeAttributeNode(attribute);
-            }
+        if (oldValue == null) {
+          if (!orphan) {
+            node.removeAttributeNode(attributeNode);
+            orphan = true;
+          }
+        } else {
+          attributeNode.value = newValue;
 
-            attribute.value = newValue;
-          } else {
-            attribute.value = newValue;
-
-            if (!owner) {
-              owner = true;
-              node.setAttributeNode(attribute);
-            }
+          if (orphan) {
+            node.setAttributeNode(attributeNode);
+            orphan = false;
           }
         }
       }
     };
-  }; // events attributes helpers
-
-
-  var hyperEvent = function hyperEvent(node, name) {
-    var oldValue;
-    var type = name.slice(2);
-    if (name.toLowerCase() in node) type = type.toLowerCase();
+  };
+  var data = function data(_ref) {
+    var dataset = _ref.dataset;
+    return function (value) {
+      for (var key in value) {
+        dataset[key] = value[key];
+      }
+    };
+  };
+  var event = function event(node, name) {
+    var oldValue,
+        type = name.slice(2);
+    if (!(name in node) && name.toLowerCase() in node) type = type.toLowerCase();
     return function (newValue) {
       var info = isArray(newValue) ? newValue : [newValue, false];
 
@@ -1322,8 +1371,17 @@ var heresy = (function (document,exports) {
         if (oldValue = info[0]) node.addEventListener(type, oldValue, info[1]);
       }
     };
-  }; // special attributes helpers
-
+  };
+  var ref = function ref(node) {
+    return function (value) {
+      if (typeof value === 'function') value(node);else value.current = node;
+    };
+  };
+  var setter = function setter(node, key) {
+    return function (value) {
+      node[key] = value;
+    };
+  };
 
   var hyperProperty = function hyperProperty(node, name) {
     var oldValue;
@@ -1339,25 +1397,6 @@ var heresy = (function (document,exports) {
           } else node[name] = newValue;
         }
       }
-    };
-  }; // special hooks helpers
-
-
-  var hyperRef = function hyperRef(node) {
-    return function (ref) {
-      if (typeof ref === 'function') ref(node);else ref.current = node;
-    };
-  };
-
-  var hyperSetter = function hyperSetter(node, name, svg) {
-    return svg ? function (value) {
-      try {
-        node[name] = value;
-      } catch (nope) {
-        node.setAttribute(name, value);
-      }
-    } : function (value) {
-      node[name] = value;
     };
   }; // list of attributes that should not be directly assigned
 
@@ -1380,29 +1419,34 @@ var heresy = (function (document,exports) {
     //  * style, the only regular attribute that also accepts an object as value
     //    so that you can style=${{width: 120}}. In this case, the behavior has been
     //    fully inspired by Preact library and its simplicity.
-    attribute: function attribute(node, name, original) {
+    attribute: function attribute$1(node, name, original) {
       var isSVG = this.type === 'svg';
 
       switch (name) {
         case 'class':
-          if (isSVG) return hyperAttribute(node, original);
+          if (isSVG) return attribute(node, name);
           name = 'className';
 
-        case 'data':
         case 'props':
-          return hyperProperty(node, name);
+          return setter(node, name);
+
+        case 'aria':
+          return aria(node);
+
+        case 'data':
+          return data(node);
 
         case 'style':
           return hyperStyle(node, original, isSVG);
 
         case 'ref':
-          return hyperRef(node);
+          return ref(node);
 
         default:
-          if (name.slice(0, 1) === '.') return hyperSetter(node, name.slice(1), isSVG);
-          if (name.slice(0, 2) === 'on') return hyperEvent(node, name);
+          if (name.slice(0, 1) === '.') return setter(node, name.slice(1));
+          if (name.slice(0, 2) === 'on') return event(node, name);
           if (name in node && !(isSVG || readOnly.test(name))) return hyperProperty(node, name);
-          return hyperAttribute(node, original);
+          return attribute(node, name);
       }
     },
     // in a hyper(node)`<div>${content}</div>` case
@@ -1946,18 +1990,19 @@ var heresy = (function (document,exports) {
   } catch ($) {}
 
   var extend = function extend(Super) {
-    return (/*#__PURE__*/function (_Super) {
-        _inherits(_class, _Super);
+    return /*#__PURE__*/function (_Super) {
+      _inherits(_class, _Super);
 
-        function _class() {
-          _classCallCheck(this, _class);
+      var _super = _createSuper(_class);
 
-          return _possibleConstructorReturn(this, _getPrototypeOf(_class).apply(this, arguments));
-        }
+      function _class() {
+        _classCallCheck(this, _class);
 
-        return _class;
-      }(Super)
-    );
+        return _super.apply(this, arguments);
+      }
+
+      return _class;
+    }(Super);
   };
 
   if (transpiled) {
@@ -2197,7 +2242,7 @@ var heresy = (function (document,exports) {
     mappedAttributes.forEach(function (name) {
       var _ = new WeakMap$1();
 
-      var listening = 'on' + name in prototype;
+      var listening = ('on' + name in prototype);
       if (listening) events.push(name);
       properties[name] = {
         configurable: configurable,
@@ -2428,7 +2473,7 @@ var heresy = (function (document,exports) {
     }
   };
 
-  var ref = function ref(self, name) {
+  var ref$1 = function ref(self, name) {
     return self ? self[name] || (self[name] = {
       current: null
     }) : {
@@ -2603,7 +2648,7 @@ var heresy = (function (document,exports) {
   exports.define = define;
   exports.defineHook = defineHook;
   exports.html = html;
-  exports.ref = ref;
+  exports.ref = ref$1;
   exports.render = render;
   exports.svg = svg;
 
