@@ -34,7 +34,7 @@
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.0",
-    "@ungap/degap": "^0.1.7",
+    "@ungap/degap": "^0.2.0",
     "ascjs": "^3.1.2",
     "drop-babel-typeof": "^1.0.3",
     "rollup": "^2.2.0",
