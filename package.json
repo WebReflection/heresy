@@ -35,7 +35,7 @@
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.0",
     "@ungap/degap": "^0.1.7",
-    "ascjs": "^3.1.2",
+    "ascjs": "^4.0.0",
     "drop-babel-typeof": "^1.0.3",
     "rollup": "^2.2.0",
     "rollup-plugin-babel": "^4.4.0",
