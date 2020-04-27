@@ -1330,7 +1330,9 @@ var heresy = (function (document,exports) {
   var attribute = function attribute(node, name) {
     var oldValue,
         orphan = true;
-    var attributeNode = document.createAttribute(name);
+    /* istanbul ignore next */
+
+    var attributeNode = document.createAttributeNS('ownerSVGElement' in node ? 'http://www.w3.org/2000/svg' : null, name);
     return function (newValue) {
       if (oldValue !== newValue) {
         oldValue = newValue;
@@ -1782,7 +1784,7 @@ var heresy = (function (document,exports) {
 
       return result;
     };
-  }; // useState
+  }; // useReducer
 
   var updates = umap(new WeakMap());
 
@@ -1794,41 +1796,48 @@ var heresy = (function (document,exports) {
     async: false,
     always: false
   };
-  var useState = function useState(value, options) {
+
+  var getValue = function getValue(value, f) {
+    return typeof f == 'function' ? f(value) : f;
+  };
+
+  var useReducer = function useReducer(reducer, value, init, options) {
     var i = state.i++;
     var _state = state,
         hook = _state.hook,
         args = _state.args,
         stack = _state.stack,
         length = _state.length;
-
-    var _ref = options || defaults,
-        asy = _ref.async,
-        always = _ref.always;
-
-    if (i === length) state.length = stack.push({
-      $: typeof value === 'function' ? value() : value,
-      _: asy ? updates.get(hook) || updates.set(hook, reraf()) : hookdate
-    });
+    if (i === length) state.length = stack.push({});
     var ref = stack[i];
-    return [ref.$, function (value) {
-      var $value = typeof value === 'function' ? value(ref.$) : value;
+    ref.args = args;
 
-      if (always || ref.$ !== $value) {
-        ref.$ = $value;
+    if (i === length) {
+      var fn = typeof init === 'function';
 
-        ref._(hook, null, args);
-      }
-    }];
-  }; // useReducer
+      var _ref = (fn ? options : init) || options || defaults,
+          asy = _ref.async,
+          always = _ref.always;
 
-  var useReducer = function useReducer(reducer, value, init, options) {
-    var fn = typeof init === 'function'; // avoid `cons [state, update] = ...` Babel destructuring bloat
+      ref.$ = fn ? init(value) : getValue(void 0, value);
+      ref._ = asy ? updates.get(hook) || updates.set(hook, reraf()) : hookdate;
 
-    var pair = useState(fn ? init(value) : value, fn ? options : init);
-    return [pair[0], function (value) {
-      pair[1](reducer(pair[0], value));
-    }];
+      ref.f = function (value) {
+        var $value = reducer(ref.$, value);
+
+        if (always || ref.$ !== $value) {
+          ref.$ = $value;
+
+          ref._(hook, null, ref.args);
+        }
+      };
+    }
+
+    return [ref.$, ref.f];
+  }; // useState
+
+  var useState = function useState(value, options) {
+    return useReducer(getValue, value, void 0, options);
   }; // useContext
 
   var hooks = new WeakMap();
