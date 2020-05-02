@@ -25,7 +25,7 @@
   "dependencies": {
     "@ungap/event": "^0.1.4",
     "@ungap/template-literal": "^0.4.1",
-    "@ungap/weakmap": "^0.1.4",
+    "@ungap/weakmap": "^0.2.0",
     "@ungap/weakset": "^0.1.5",
     "augmentor": "^2.2.0",
     "lighterhtml": "^3.1.0",
