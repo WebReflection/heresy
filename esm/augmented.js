@@ -1,7 +1,6 @@
 import Event from '@ungap/event';
 import WeakMap from '@ungap/weakmap';
 import WeakSet from '@ungap/weakset';
-import tl from '@ungap/template-literal';
 
 import {Hole, custom} from 'lighterhtml';
 
@@ -278,8 +277,7 @@ const setWrap = (self, type, wm) => {
   return fn;
 };
 
-const wrap = (self, type, wm) => (tpl, ...values) => {
-  const template = tl(tpl);
+const wrap = (self, type, wm) => (template, ...values) => {
   const local = wm.get(template) ||
                 setParsed(wm, template, self[secret]);
   return lighterRender(self, () => type(local, ...values));

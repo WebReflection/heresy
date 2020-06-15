@@ -9,6 +9,12 @@ React-like Custom Elements via the V1 API built-in extends. **[Also available fo
 
 - - -
 
+### V1 Breaking Changes
+
+Please be sure you understand the [breaking changes landed in lighterhtml](https://github.com/WebReflection/lighterhtml#v4-breaking-changes).
+
+- - -
+
 ## What is this _heresy_ ?
 
 This project is some sort of answer to these major trends:
@@ -19,7 +25,7 @@ This project is some sort of answer to these major trends:
 
 Borrowing concepts and patterns from various libraries, _heresy_ enables custom elements as you've never seen before:
 
-  * declarative UI (i.e. `<Component class=${...}><Section data=${{...}}/></Component>`) without needing JSX transformations or tooling at all
+  * declarative UI (i.e. `<Component class=${...}><Section .dataset=${{...}}/></Component>`) without needing JSX transformations or tooling at all
   * locally scoped custom elements to avoid name clashing and make components reusable in any context, similarly to what you can do with React components
   * automatic component name definition passed through the optional `Component.style(...selectors)` to inject related styles only once per definition
   * automatic [handleEvent](https://medium.com/@WebReflection/dom-handleevent-a-cross-platform-standard-since-year-2000-5bf17287fd38) pattern so that you can forget the unnecessary overhead of `this.method = this.method.bind(this)`

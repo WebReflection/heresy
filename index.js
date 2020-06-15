@@ -2497,12 +2497,11 @@ var heresy = (function (document,exports) {
   };
 
   var wrap = function wrap(self, type, wm) {
-    return function (tpl) {
+    return function (template) {
       for (var _len3 = arguments.length, values = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
         values[_key3 - 1] = arguments[_key3];
       }
 
-      var template = TL(tpl);
       var local = wm.get(template) || setParsed(wm, template, self[secret]);
       return lighterRender(self, function () {
         return type.apply(void 0, [local].concat(values));

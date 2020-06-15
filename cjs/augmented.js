@@ -2,7 +2,6 @@
 const Event = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/event'));
 const WeakMap = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakmap'));
 const WeakSet = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/weakset'));
-const tl = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('@ungap/template-literal'));
 
 const {Hole, custom} = require('lighterhtml');
 
@@ -280,8 +279,7 @@ const setWrap = (self, type, wm) => {
   return fn;
 };
 
-const wrap = (self, type, wm) => (tpl, ...values) => {
-  const template = tl(tpl);
+const wrap = (self, type, wm) => (template, ...values) => {
   const local = wm.get(template) ||
                 setParsed(wm, template, self[secret]);
   return lighterRender(self, () => type(local, ...values));

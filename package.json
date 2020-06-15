@@ -24,7 +24,6 @@
   "license": "ISC",
   "dependencies": {
     "@ungap/event": "^0.2.0",
-    "@ungap/template-literal": "^0.5.0",
     "@ungap/weakmap": "^0.2.0",
     "@ungap/weakset": "^0.2.0",
     "augmentor": "^2.2.0",
