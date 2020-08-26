@@ -161,9 +161,7 @@ var heresy = (function (document,exports) {
   }
 
   /*! (c) Andrea Giammarchi - ISC */
-  var self = null ||
-  /* istanbul ignore next */
-  {};
+  var self = {};
 
   try {
     self.WeakMap = WeakMap;
@@ -218,9 +216,7 @@ var heresy = (function (document,exports) {
   });
 
   /*! (c) Andrea Giammarchi - ISC */
-  var self$1 = null ||
-  /* istanbul ignore next */
-  {};
+  var self$1 = {};
 
   try {
     self$1.Event = new Event('.').constructor;
@@ -248,9 +244,7 @@ var heresy = (function (document,exports) {
   var Event$1 = self$1.Event;
 
   /*! (c) Andrea Giammarchi - ISC */
-  var self$2 = null ||
-  /* istanbul ignore next */
-  {};
+  var self$2 = {};
 
   try {
     self$2.WeakSet = WeakSet;
@@ -370,10 +364,8 @@ var heresy = (function (document,exports) {
   };
   var persistent = function persistent(fragment) {
     var childNodes = fragment.childNodes;
-    var length = childNodes.length; // If the fragment has no content
-    // it should return undefined and break
-
-    if (length < 2) return childNodes[0];
+    var length = childNodes.length;
+    if (length < 2) return length ? childNodes[0] : fragment;
     var nodes = slice.call(childNodes, 0);
     var firstChild = nodes[0];
     var lastChild = nodes[length - 1];
@@ -598,114 +590,6 @@ var heresy = (function (document,exports) {
   });
 
   /*! (c) Andrea Giammarchi - ISC */
-  var self$3 = null ||
-  /* istanbul ignore next */
-  {};
-
-  try {
-    self$3.WeakMap = WeakMap;
-  } catch (WeakMap) {
-    // this could be better but 90% of the time
-    // it's everything developers need as fallback
-    self$3.WeakMap = function (id, Object) {
-
-      var dP = Object.defineProperty;
-      var hOP = Object.hasOwnProperty;
-      var proto = WeakMap.prototype;
-
-      proto["delete"] = function (key) {
-        return this.has(key) && delete key[this._];
-      };
-
-      proto.get = function (key) {
-        return this.has(key) ? key[this._] : void 0;
-      };
-
-      proto.has = function (key) {
-        return hOP.call(key, this._);
-      };
-
-      proto.set = function (key, value) {
-        dP(key, this._, {
-          configurable: true,
-          value: value
-        });
-        return this;
-      };
-
-      return WeakMap;
-
-      function WeakMap(iterable) {
-        dP(this, '_', {
-          value: '_@ungap/weakmap' + id++
-        });
-        if (iterable) iterable.forEach(add, this);
-      }
-
-      function add(pair) {
-        this.set(pair[0], pair[1]);
-      }
-    }(Math.random(), Object);
-  }
-
-  var WeakMap$2 = self$3.WeakMap;
-
-  /*! (c) Andrea Giammarchi - ISC */
-  var createContent$1 = function (document) {
-
-    var FRAGMENT = 'fragment';
-    var TEMPLATE = 'template';
-    var HAS_CONTENT = ('content' in create(TEMPLATE));
-    var createHTML = HAS_CONTENT ? function (html) {
-      var template = create(TEMPLATE);
-      template.innerHTML = html;
-      return template.content;
-    } : function (html) {
-      var content = create(FRAGMENT);
-      var template = create(TEMPLATE);
-      var childNodes = null;
-
-      if (/^[^\S]*?<(col(?:group)?|t(?:head|body|foot|r|d|h))/i.test(html)) {
-        var selector = RegExp.$1;
-        template.innerHTML = '<table>' + html + '</table>';
-        childNodes = template.querySelectorAll(selector);
-      } else {
-        template.innerHTML = html;
-        childNodes = template.childNodes;
-      }
-
-      append(content, childNodes);
-      return content;
-    };
-    return function createContent(markup, type) {
-      return (type === 'svg' ? createSVG : createHTML)(markup);
-    };
-
-    function append(root, childNodes) {
-      var length = childNodes.length;
-
-      while (length--) {
-        root.appendChild(childNodes[0]);
-      }
-    }
-
-    function create(element) {
-      return element === FRAGMENT ? document.createDocumentFragment() : document.createElementNS('http://www.w3.org/1999/xhtml', element);
-    } // it could use createElementNS when hasNode is there
-    // but this fallback is equally fast and easier to maintain
-    // it is also battle tested already in all IE
-
-
-    function createSVG(svg) {
-      var content = create(FRAGMENT);
-      var template = create('div');
-      template.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + svg + '</svg>';
-      append(content, template.firstChild.childNodes);
-      return content;
-    }
-  }(document);
-
-  /*! (c) Andrea Giammarchi - ISC */
   var importNode = function (document, appendChild, cloneNode, createTextNode, importNode) {
     var _native = (importNode in document); // IE 11 has problems with cloning templates:
     // it "forgets" empty childNodes. This feature-detects that.
@@ -714,21 +598,29 @@ var heresy = (function (document,exports) {
     var fragment = document.createDocumentFragment();
     fragment[appendChild](document[createTextNode]('g'));
     fragment[appendChild](document[createTextNode](''));
+    /* istanbul ignore next */
+
     var content = _native ? document[importNode](fragment, true) : fragment[cloneNode](true);
     return content.childNodes.length < 2 ? function importNode(node, deep) {
       var clone = node[cloneNode]();
 
-      for (var childNodes = node.childNodes || [], length = childNodes.length, i = 0; deep && i < length; i++) {
+      for (var
+      /* istanbul ignore next */
+      childNodes = node.childNodes || [], length = childNodes.length, i = 0; deep && i < length; i++) {
         clone[appendChild](importNode(childNodes[i], deep));
       }
 
       return clone;
-    } : _native ? document[importNode] : function (node, deep) {
+    } :
+    /* istanbul ignore next */
+    _native ? document[importNode] : function (node, deep) {
       return node[cloneNode](!!deep);
     };
   }(document, 'appendChild', 'cloneNode', 'createTextNode', 'importNode');
 
-  var trim = ''.trim || function () {
+  var trim = ''.trim ||
+  /* istanbul ignore next */
+  function () {
     return String(this).replace(/^\s+|\s+/g, '');
   };
 
@@ -925,13 +817,13 @@ var heresy = (function (document,exports) {
   }
 
   // globals
-  var parsed = umap(new WeakMap$2());
+  var parsed = umap(new WeakMap$1());
 
   function createInfo(options, template) {
     var markup = (options.convert || domsanitizer)(template);
     var transform = options.transform;
     if (transform) markup = transform(markup);
-    var content = createContent$1(markup, options.type);
+    var content = createContent(markup, options.type);
     cleanContent(content);
     var holes = [];
     parse(content, holes, template.slice(0), []);
@@ -1129,9 +1021,11 @@ var heresy = (function (document,exports) {
   }();
 
   var aria = function aria(node) {
-    return function (value) {
-      for (var key in value) {
-        node.setAttribute(key === 'role' ? key : "aria-".concat(key), value[key]);
+    return function (values) {
+      for (var key in values) {
+        var name = key === 'role' ? key : "aria-".concat(key);
+        var value = values[key];
+        if (value == null) node.removeAttribute(name);else node.setAttribute(name, value);
       }
     };
   };
@@ -1161,9 +1055,10 @@ var heresy = (function (document,exports) {
   };
   var data = function data(_ref) {
     var dataset = _ref.dataset;
-    return function (value) {
-      for (var key in value) {
-        dataset[key] = value[key];
+    return function (values) {
+      for (var key in values) {
+        var value = values[key];
+        if (value == null) delete dataset[key];else dataset[key] = value;
       }
     };
   };
