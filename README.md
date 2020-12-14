@@ -9,6 +9,12 @@ React-like Custom Elements via the V1 API built-in extends. **[Also available fo
 
 - - -
 
+### 📣 Community Announcement
+
+Please ask questions in the [dedicated forum](https://webreflection.boards.net/) to help the community around this project grow ♥
+
+---
+
 ### V1 Breaking Changes
 
 Please be sure you understand the [breaking changes landed in lighterhtml](https://github.com/WebReflection/lighterhtml#v4-breaking-changes).
