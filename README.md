@@ -244,6 +244,18 @@ class MyButton extends HTMLButtonElement {
     }`
   }
 
+  // (optional) attributes that can either be true or false once accessed
+  // reflected on the DOM as either present, or not
+  static get booleanAttributes() { return ['checked']; }
+
+  // (optional) store any value directly and dispatch `on${name}` on changes
+  static get mappedAttributes() { return ['data']; }
+  // if `ondata(event){}` is defined, event.detail will have the new value
+
+  // (optional) native Custom Elements behavior with changes dispatched
+  // through the onattributechanged callback
+  static get observedAttributes() { return ['name', 'age']; }
+
   // (optional) event driven initialization that will happen only once
   // the ideal constructor substitute for any sort of one-off init
   // this is triggered only once the component goes live, never before *
@@ -256,18 +268,6 @@ class MyButton extends HTMLButtonElement {
   onconnected(event) {}
   ondisconnected(event) {}
   onattributechanged(event = {attributeName, oldValue, newValue}) {}
-
-  // (optional) attributes that can either be true or false once accessed
-  // reflected on the DOM as either present, or not
-  get booleanAttributes() { return ['checked']; }
-
-  // (optional) store any value directly and dispatch `on${name}` on changes
-  get mappedAttributes() { return ['data']; }
-  // if `ondata(event){}` is defined, event.detail will have the new value
-
-  // (optional) native Custom Elements behavior with changes dispatched
-  // through the onattributechanged callback
-  get observedAttributes() { return ['name', 'age']; }
 
   // (optional) populate this custom element content
   //            if the signature has at least one argument,
